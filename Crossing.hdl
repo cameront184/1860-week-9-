@@ -127,11 +127,11 @@ Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
         a=segA, b=segB, c=segC, d=segD, e=segE, f=segF, g=segG);
 
 // Only display during crossing (blank otherwise)
-Mux(a=false, b=segB, sel=cross, out=C[0]); // C0 <- Decoder b
-Mux(a=false, b=segF, sel=cross, out=C[1]); // C1 <- Decoder f
-Mux(a=false, b=segG, sel=cross, out=C[2]); // C2 <- Decoder g
-Mux(a=false, b=segA, sel=cross, out=C[3]); // C3 <- Decoder a
-Mux(a=false, b=segC, sel=cross, out=C[4]); // C4 <- Decoder c
-Mux(a=false, b=segD, sel=cross, out=C[5]); // C5 <- Decoder d
-Mux(a=false, b=segE, sel=cross, out=C[6]); // C6 <- Decoder e
+Mux(a=false, b=segA, sel=cross, out=C[0]); // a
+Mux(a=false, b=segB, sel=cross, out=C[1]); // b
+Mux(a=false, b=segC, sel=cross, out=C[2]); // c
+Mux(a=false, b=segD, sel=cross, out=C[3]); // d
+Mux(a=false, b=segE, sel=cross, out=C[4]); // e
+Mux(a=false, b=segF, sel=cross, out=C[5]); // f
+Mux(a=false, b=segG, sel=cross, out=C[6]); // g
 }
