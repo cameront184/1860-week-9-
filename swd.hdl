@@ -3,7 +3,7 @@ CHIP Crossing {
     OUT ButtonPressed, Wait, X[3], Z[3], C[7];
 
     PARTS:
-
+    
     // Registers
     // traffic sequence state (0 to 7)
     Bit(in=sIn0, load=PowerOn, out=s0);
@@ -22,7 +22,7 @@ CHIP Crossing {
     Bit(in=cIn2, load=loadCount, out=c2);
     Bit(in=cIn3, load=loadCount, out=c3);
 
-    // detect when count=0 and state=7
+    //detect when count=0 and state=7
     Or(a=c0, b=c1, out=cor01);
     Or(a=c2, b=c3, out=cor23);
     Or(a=cor01, b=cor23, out=countNotZero);
@@ -32,11 +32,12 @@ CHIP Crossing {
     And(a=s0, b=s1, out=s01);
     And(a=s01, b=s2, out=state7);
 
-    // crossing ends when cross = 1 and count = 0
+    // crossing ends when cross = 1 and count = 0 
     And(a=cross, b=countIsZero, out=crossEnd);
     Not(in=crossEnd, out=notCrossEnd);
 
     // Start the crossing only when we reach the end of the cycle (state 7) and a button has been latched.
+
     And(a=btnLatched, b=state7, out=wantStart);
     And(a=wantStart, b=PowerOn, out=startCross);
 
@@ -51,7 +52,7 @@ CHIP Crossing {
     And(a=btnOr, b=notCrossEnd, out=btnNext);
     Or(a=btnLatched, b=false, out=ButtonPressed);
 
-    // increment logic for state 0 to 7
+    // increment logic for 2 to 0
     Not(in=s0, out=inc0);
     Xor(a=s0, b=s1, out=inc1);
     And(a=s0, b=s1, out=carry1);
@@ -68,26 +69,42 @@ CHIP Crossing {
     Mux(a=sn1, b=false, sel=overrideState, out=sIn1);
     Mux(a=sn2, b=false, sel=overrideState, out=sIn2);
 
-    // Normal traffic lights (no crossing)
+   
+    // Decode traffic states (0to7)
     Not(in=s0, out=ns0);
     Not(in=s1, out=ns1);
     Not(in=s2, out=ns2);
 
-    // 4-step phase
-    Or(a=ns1, b=false, out=phaseR);
-    Or(a=s0,  b=false, out=phaseA);
-    And(a=s1, b=ns0,  out=phaseG);
+    And(a=ns0, b=ns1, out=d0a); And(a=d0a, b=ns2, out=d0);
+    And(a=s0,  b=ns1, out=d1a); And(a=d1a, b=ns2, out=d1);
+    And(a=ns0, b=s1,  out=d2a); And(a=d2a, b=ns2, out=d2);
+    And(a=s0,  b=s1,  out=d3a); And(a=d3a, b=ns2, out=d3);
+    And(a=ns0, b=ns1, out=d4a); And(a=d4a, b=s2,  out=d4);
+    And(a=s0,  b=ns1, out=d5a); And(a=d5a, b=s2,  out=d5);
+    And(a=ns0, b=s1,  out=d6a); And(a=d6a, b=s2,  out=d6);
+    And(a=s0,  b=s1,  out=d7a); And(a=d7a, b=s2,  out=d7);
 
-    // Base outputs before the crossing override
-    Mux(a=true,   b=phaseR, sel=s2, out=XrBase);
-    Mux(a=false,  b=phaseA, sel=s2, out=XaBase);
-    Mux(a=false,  b=phaseG, sel=s2, out=XgBase);
+    //X output
+    Or(a=d0, b=d1, out=xr1);
+    Or(a=d4, b=d5, out=xr2);
+    Or(a=d6, b=d7, out=xr3);
+    Or(a=xr1, b=xr2, out=xr4);
+    Or(a=xr4, b=xr3, out=XrBase);
 
-    Mux(a=phaseR, b=true,   sel=s2, out=ZrBase);
-    Mux(a=phaseA, b=false,  sel=s2, out=ZaBase);
-    Mux(a=phaseG, b=false,  sel=s2, out=ZgBase);
+    Or(a=d1, b=d3, out=XaBase);
+    Or(a=d2, b=false, out=XgBase);
 
-    // Overrided outputs during crossing
+    // Z output
+    Or(a=d0, b=d1, out=zr1);
+    Or(a=d2, b=d3, out=zr2);
+    Or(a=d4, b=d5, out=zr3);
+    Or(a=zr1, b=zr2, out=zr4);
+    Or(a=zr4, b=zr3, out=ZrBase);
+
+    Or(a=d5, b=d7, out=ZaBase);
+    Or(a=d6, b=false, out=ZgBase);
+
+    // Override outputs during crossing
     Mux(a=XrBase, b=true,  sel=cross, out=X[2]);
     Mux(a=XaBase, b=false, sel=cross, out=X[1]);
     Mux(a=XgBase, b=false, sel=cross, out=X[0]);
@@ -96,12 +113,13 @@ CHIP Crossing {
     Mux(a=ZaBase, b=false, sel=cross, out=Z[1]);
     Mux(a=ZgBase, b=false, sel=cross, out=Z[0]);
 
-    // Countdown from 9 then decrement while crossing
+    
+    //load 9 at startCross
     And(a=cross, b=countNotZero, out=doDec);
     Or(a=doDec, b=startCross, out=updateCount);
     And(a=updateCount, b=PowerOn, out=loadCount);
 
-    // subtracting 1
+    // subtract 1 
     Not(in=c0, out=dec0);
 
     Not(in=c0, out=bc1pre);
@@ -122,16 +140,16 @@ CHIP Crossing {
     Mux(a=dec2, b=false, sel=startCross, out=cIn2); // 0
     Mux(a=dec3, b=true,  sel=startCross, out=cIn3); // 1
 
-    // 7-segment decoder current count
+    // 7-seg decoder current count
     Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
             a=segA, b=segB, c=segC, d=segD, e=segE, f=segF, g=segG);
 
-    // Only display during crossing.
-    Mux(a=false, b=segF, sel=cross, out=C[0]);
-    Mux(a=false, b=segA, sel=cross, out=C[1]);
-    Mux(a=false, b=segE, sel=cross, out=C[2]);
+    // Only display during crossing 
+    Mux(a=false, b=segA, sel=cross, out=C[0]);
+    Mux(a=false, b=segB, sel=cross, out=C[1]);
+    Mux(a=false, b=segC, sel=cross, out=C[2]);
     Mux(a=false, b=segD, sel=cross, out=C[3]);
-    Mux(a=false, b=segB, sel=cross, out=C[4]);
-    Mux(a=false, b=segG, sel=cross, out=C[5]);
-    Mux(a=false, b=segC, sel=cross, out=C[6]);
+    Mux(a=false, b=segE, sel=cross, out=C[4]);
+    Mux(a=false, b=segF, sel=cross, out=C[5]);
+    Mux(a=false, b=segG, sel=cross, out=C[6]);
 }
