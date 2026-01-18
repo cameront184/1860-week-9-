@@ -140,17 +140,15 @@ CHIP Crossing {
     Mux(a=dec3, b=true,  sel=startCross, out=cIn3); // 1
 
     // 7-seg decoder current count
-    Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
-            a=segA, b=segB, c=segC, d=segD, e=segE, f=segF, g=segG);
+Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
+        a=segA, b=segB, c=segC, d=segD, e=segE, f=segF, g=segG);
 
-    // Only display during crossing.
-    // IMPORTANT: The test expects a specific bit-to-segment wiring:
-    //   C[0]=f, C[1]=a, C[2]=e, C[3]=d, C[4]=b, C[5]=g, C[6]=c
-    Mux(a=false, b=segF, sel=cross, out=C[0]);
-    Mux(a=false, b=segA, sel=cross, out=C[1]);
-    Mux(a=false, b=segE, sel=cross, out=C[2]);
-    Mux(a=false, b=segD, sel=cross, out=C[3]);
-    Mux(a=false, b=segB, sel=cross, out=C[4]);
-    Mux(a=false, b=segG, sel=cross, out=C[5]);
-    Mux(a=false, b=segC, sel=cross, out=C[6]);
+// Direct mapping - try standard order
+Mux(a=false, b=segA, sel=cross, out=C[0]);
+Mux(a=false, b=segB, sel=cross, out=C[1]);
+Mux(a=false, b=segC, sel=cross, out=C[2]);
+Mux(a=false, b=segD, sel=cross, out=C[3]);
+Mux(a=false, b=segE, sel=cross, out=C[4]);
+Mux(a=false, b=segF, sel=cross, out=C[5]);
+Mux(a=false, b=segG, sel=cross, out=C[6]);
 }
