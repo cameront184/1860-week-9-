@@ -1,0 +1,84 @@
+CHIP Decoder {
+    IN in[4];
+    OUT a, b, c, d, e, f, g;
+    PARTS:
+    
+    Not(in=in[0], out=n0);
+    Not(in=in[1], out=n1);
+    Not(in=in[2], out=n2);
+    Not(in=in[3], out=n3);
+
+    And(a=n3, b=n2, out=a1);
+    And(a=a1, b=n1, out=a2);
+    And(a=a2, b=in[0], out=aOff1);    
+    And(a=n3, b=in[2], out=a3);
+    And(a=a3, b=n1, out=a4);
+    And(a=a4, b=n0, out=aOff2);       
+    Or(a=aOff1, b=aOff2, out=aOff);
+    Not(in=aOff, out=a);
+    
+    And(a=n3, b=in[2], out=b1);
+    And(a=b1, b=n1, out=b2);
+    And(a=b2, b=in[0], out=bOff1);    
+    And(a=b1, b=in[1], out=b3);
+    And(a=b3, b=n0, out=bOff2);       
+    Or(a=bOff1, b=bOff2, out=bOff);
+    Not(in=bOff, out=b);
+    
+    And(a=n3, b=n2, out=c1);
+    And(a=c1, b=in[1], out=c2);
+    And(a=c2, b=n0, out=cOff);
+    Not(in=cOff, out=c);
+    
+    And(a=n3, b=n2, out=d1);
+    And(a=d1, b=n1, out=d2);
+    And(a=d2, b=in[0], out=dOff1);    
+    And(a=n3, b=in[2], out=d3);
+    And(a=d3, b=n1, out=d4);
+    And(a=d4, b=n0, out=dOff2);       
+    And(a=d3, b=in[1], out=d5);
+    And(a=d5, b=in[0], out=dOff3);    
+    Or(a=dOff1, b=dOff2, out=dOff12);
+    Or(a=dOff12, b=dOff3, out=dOff);
+    Not(in=dOff, out=d);
+  
+    And(a=n3, b=n2, out=e1);
+    And(a=e1, b=n1, out=e2);
+    And(a=e2, b=n0, out=eOn1);        
+    And(a=e1, b=in[1], out=e3);
+    And(a=e3, b=n0, out=eOn2);        
+    And(a=n3, b=in[2], out=e4);
+    And(a=e4, b=in[1], out=e5);
+    And(a=e5, b=n0, out=eOn3);        
+    And(a=in[3], b=n2, out=e6);
+    And(a=e6, b=n1, out=e7);
+    And(a=e7, b=n0, out=eOn4);        
+    Or(a=eOn1, b=eOn2, out=eOn12);
+    Or(a=eOn3, b=eOn4, out=eOn34);
+    Or(a=eOn12, b=eOn34, out=e);
+    
+    And(a=n3, b=n2, out=f1);
+    And(a=f1, b=n1, out=f2);
+    And(a=f2, b=in[0], out=fOff1);    
+    And(a=f1, b=in[1], out=f3);
+    And(a=f3, b=n0, out=fOff2);       
+    And(a=f3, b=in[0], out=fOff3);    
+    And(a=n3, b=in[2], out=f4);
+    And(a=f4, b=in[1], out=f5);
+    And(a=f5, b=in[0], out=fOff4);    
+    Or(a=fOff1, b=fOff2, out=fOff12);
+    Or(a=fOff3, b=fOff4, out=fOff34);
+    Or(a=fOff12, b=fOff34, out=fOff);
+    Not(in=fOff, out=f);
+    
+    And(a=n3, b=n2, out=g1);
+    And(a=g1, b=n1, out=g2);
+    And(a=g2, b=n0, out=gOff1);       
+    And(a=g2, b=in[0], out=gOff2);    
+    And(a=n3, b=in[2], out=g3);
+    And(a=g3, b=in[1], out=g4);
+    And(a=g4, b=in[0], out=gOff3);    
+    Or(a=gOff1, b=gOff2, out=gOff12);
+    Or(a=gOff12, b=gOff3, out=gOff);
+    Not(in=gOff, out=g);
+}
