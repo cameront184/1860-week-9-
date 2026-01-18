@@ -1,0 +1,151 @@
+CHIP Crossing {
+    IN PowerOn, Button;
+    OUT ButtonPressed, Wait, X[3], Z[3], C[7];
+    
+    PARTS:
+    // Create separate load signals for each register
+    Or(a=PowerOn, b=false, out=load1);
+    Or(a=PowerOn, b=false, out=load2);
+    Or(a=PowerOn, b=false, out=load3);
+    Or(a=PowerOn, b=false, out=load4);
+    Or(a=PowerOn, b=false, out=load5);
+    
+    // Button latch stays high once pressed until crossing completes
+    Or(a=Button, b=buttonState, out=buttonOrState);
+    And(a=buttonOrState, b=notDone, out=newButtonState);
+    Bit(in=newButtonState, load=load1, out=buttonState);
+    Or(a=buttonState, b=false, out=ButtonPressed);
+    
+    // Junction state counter (0 to 7)
+    Not(in=js0, out=notjs0);
+    Not(in=js1, out=notjs1);
+    Not(in=js2, out=notjs2);
+    
+    // Check if at state 4 (100), both lights RED
+    And(a=notjs0, b=notjs1, out=check4);
+    And(a=check4, b=js2, out=atJunctionState4);
+    
+    // Start crossing when button latched and at state 4
+    And(a=buttonState, b=atJunctionState4, out=beginCrossing);
+    
+    // Crossing active state
+    Or(a=beginCrossing, b=crossState, out=newCrossState);
+    And(a=newCrossState, b=notDone, out=nextCrossState);
+    Bit(in=nextCrossState, load=load2, out=crossState);
+    
+    // Wait signal
+    Not(in=crossState, out=Wait);
+    
+    // Junction counter increment
+    Not(in=js0, out=jnext0);
+    Xor(a=js0, b=js1, out=jnext1);
+    And(a=js0, b=js1, out=jcarry);
+    Xor(a=jcarry, b=js2, out=jnext2);
+    
+    // Only increment when waiting
+    Mux(a=js0, b=jnext0, sel=Wait, out=jin0);
+    Mux(a=js1, b=jnext1, sel=Wait, out=jin1);
+    Mux(a=js2, b=jnext2, sel=Wait, out=jin2);
+    
+    Bit(in=jin0, load=load3, out=js0);
+    Bit(in=jin1, load=load3, out=js1);
+    Bit(in=jin2, load=load3, out=js2);
+    
+    // Decode junction states
+    And(a=notjs0, b=notjs1, out=j0a);
+    And(a=j0a, b=notjs2, out=j0);
+    
+    And(a=js0, b=notjs1, out=j1a);
+    And(a=j1a, b=notjs2, out=j1);
+    
+    And(a=notjs0, b=js1, out=j2a);
+    And(a=j2a, b=notjs2, out=j2);
+    
+    And(a=js0, b=js1, out=j3a);
+    And(a=j3a, b=notjs2, out=j3);
+    
+    And(a=notjs0, b=notjs1, out=j4a);
+    And(a=j4a, b=js2, out=j4);
+    
+    And(a=js0, b=notjs1, out=j5a);
+    And(a=j5a, b=js2, out=j5);
+    
+    And(a=notjs0, b=js1, out=j6a);
+    And(a=j6a, b=js2, out=j6);
+    
+    And(a=js0, b=js1, out=j7a);
+    And(a=j7a, b=js2, out=j7);
+    
+    // Traffic light X outputs 
+    Or(a=j0, b=j1, out=xr1);
+    Or(a=j4, b=j5, out=xr2);
+    Or(a=j6, b=j7, out=xr3);
+    Or(a=xr1, b=xr2, out=xr4);
+    Or(a=xr4, b=xr3, out=X[2]);
+    Or(a=j1, b=j3, out=X[1]);
+    Or(a=j2, b=false, out=X[0]);
+    
+    // Traffic light Z outputs
+    Or(a=j0, b=j1, out=zr1);
+    Or(a=j2, b=j3, out=zr2);
+    Or(a=j4, b=j5, out=zr3);
+    Or(a=zr1, b=zr2, out=zr4);
+    Or(a=zr4, b=zr3, out=Z[2]);
+    Or(a=j5, b=j7, out=Z[1]);
+    Or(a=j6, b=false, out=Z[0]);
+    
+    // Countdown timer
+    Or(a=c0, b=c1, out=cor1);
+    Or(a=c2, b=c3, out=cor2);
+    Or(a=cor1, b=cor2, out=notZero);
+    Not(in=notZero, out=isZero);
+    
+    // Done when at zero during crossing
+    And(a=isZero, b=crossState, out=crossingDone);
+    Not(in=crossingDone, out=notDone);
+    
+    // Decrement when crossing and not zero
+    And(a=crossState, b=notZero, out=shouldDec);
+    
+    // Decrement logic
+    Not(in=c0, out=notc0);
+    Mux(a=c0, b=notc0, sel=shouldDec, out=d0);
+    
+    Not(in=c0, out=bor0);
+    And(a=bor0, b=shouldDec, out=f1);
+    Not(in=c1, out=notc1);
+    Mux(a=c1, b=notc1, sel=f1, out=d1);
+    
+    Or(a=c0, b=c1, out=or1);
+    Not(in=or1, out=bor1);
+    And(a=bor1, b=shouldDec, out=f2);
+    Not(in=c2, out=notc2);
+    Mux(a=c2, b=notc2, sel=f2, out=d2);
+    
+    Or(a=or1, b=c2, out=or2);
+    Not(in=or2, out=bor2);
+    And(a=bor2, b=shouldDec, out=f3);
+    Not(in=c3, out=notc3);
+    Mux(a=c3, b=notc3, sel=f3, out=d3);
+    
+    // Load 9 when starting
+    And(a=isZero, b=beginCrossing, out=load9);
+    
+    Mux(a=d0, b=true, sel=load9, out=n0);
+    Mux(a=d1, b=false, sel=load9, out=n1);
+    Mux(a=d2, b=false, sel=load9, out=n2);
+    Mux(a=d3, b=true, sel=load9, out=n3);
+    
+    Or(a=shouldDec, b=beginCrossing, out=updateCounter);
+    And(a=updateCounter, b=load4, out=loadC);
+    Or(a=loadC, b=false, out=load5);
+    
+    Bit(in=n0, load=load5, out=c0);
+    Bit(in=n1, load=load5, out=c1);
+    Bit(in=n2, load=load5, out=c2);
+    Bit(in=n3, load=load5, out=c3);
+    
+    // 7-segment decoder
+    Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
+            a=C[0], b=C[1], c=C[2], d=C[3], e=C[4], f=C[5], g=C[6]);
+}
