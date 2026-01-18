@@ -1,6 +1,6 @@
 CHIP CrossingDecoder {
     IN in[4];
-    OUT C[7];
+    OUT out[7];
 
     PARTS:
     // ===== Segment C[0] =====
