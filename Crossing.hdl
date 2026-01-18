@@ -98,7 +98,7 @@ CHIP Crossing {
 
     // Countdown from 9 then decrement while crossing
     And(a=cross, b=countNotZero, out=doDec);
-    Or(a=doDec, b=startCross, out=updateCount);
+    Or(a=doDec, b=cross, out=updateCount);
     And(a=updateCount, b=PowerOn, out=loadCount);
 
     // subtracting 1
