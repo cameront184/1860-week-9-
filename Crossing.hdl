@@ -17,6 +17,7 @@ CHIP Crossing {
     Bit(in=btnNext, load=PowerOn, out=btnLatched);
 
     // countdown (0 to 9)
+    Or(a=PowerOn, b=false, out=loadCount);
     Bit(in=cIn0, load=loadCount, out=c0);
     Bit(in=cIn1, load=loadCount, out=c1);
     Bit(in=cIn2, load=loadCount, out=c2);
@@ -36,7 +37,7 @@ CHIP Crossing {
     And(a=cross, b=countIsZero, out=crossEnd);
     Not(in=crossEnd, out=notCrossEnd);
 
-    // Start the crossing only when we reach the end of the cycle (state 7) and a button has been latched.
+    // Start the crossing only when we reach the end of the cycle (state 7) and a button has been latched
     And(a=btnLatched, b=state7, out=wantStart);
     And(a=wantStart, b=PowerOn, out=startCross);
 
@@ -98,8 +99,6 @@ CHIP Crossing {
 
     // Countdown from 9 then decrement while crossing
     And(a=cross, b=countNotZero, out=doDec);
-    Or(a=doDec, b=cross, out=updateCount);
-    And(a=updateCount, b=PowerOn, out=loadCount);
 
     // subtracting 1
     Not(in=c0, out=dec0);
@@ -117,12 +116,12 @@ CHIP Crossing {
     Xor(a=c3, b=borrow3, out=dec3);
 
     // load 9 = 1001 when starting crossing
-    Mux(a=dec0, b=true,  sel=startCross, out=cIn0); // 1
-    Mux(a=dec1, b=false, sel=startCross, out=cIn1); // 0
-    Mux(a=dec2, b=false, sel=startCross, out=cIn2); // 0
-    Mux(a=dec3, b=true,  sel=startCross, out=cIn3); // 1
+    Mux(a=dec0, b=true,  sel=startCross, out=cIn0);
+    Mux(a=dec1, b=false, sel=startCross, out=cIn1);
+    Mux(a=dec2, b=false, sel=startCross, out=cIn2);
+    Mux(a=dec3, b=true,  sel=startCross, out=cIn3);
 
-    //7-seg decoder for the crossing
+    // 7-seg decoder for the crossing
     CrossingDecoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3, out=segCcorr);
 
     // Only display during crossing
