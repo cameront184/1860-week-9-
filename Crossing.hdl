@@ -123,7 +123,7 @@ CHIP Crossing {
     Mux(a=dec3, b=true,  sel=startCross, out=cIn3); // 1
 
     //7-seg decoder for the crossing
-    CrossingDecoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3, C=segCcorr);
+    CrossingDecoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3, out=segCcorr);
 
     // Only display during crossing
     Mux(a=false, b=segCcorr[0], sel=cross, out=C[0]);
