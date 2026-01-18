@@ -122,16 +122,15 @@ CHIP Crossing {
     Mux(a=dec2, b=false, sel=startCross, out=cIn2); // 0
     Mux(a=dec3, b=true,  sel=startCross, out=cIn3); // 1
 
-   // 7-seg decoder current count
-Decoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3,
-        a=segA, b=segB, c=segC, d=segD, e=segE, f=segF, g=segG);
+    //7-seg decoder for the crossing
+    CrossingDecoder(in[0]=c0, in[1]=c1, in[2]=c2, in[3]=c3, C=segCcorr);
 
-// Only display during crossing (blank otherwise)
-Mux(a=false, b=segA, sel=cross, out=C[0]);
-Mux(a=false, b=segB, sel=cross, out=C[1]);
-Mux(a=false, b=segC, sel=cross, out=C[2]);
-Mux(a=false, b=segD, sel=cross, out=C[3]);
-Mux(a=false, b=segE, sel=cross, out=C[4]);
-Mux(a=false, b=segF, sel=cross, out=C[5]);
-Mux(a=false, b=segG, sel=cross, out=C[6]);
+    // Only display during crossing
+    Mux(a=false, b=segCcorr[0], sel=cross, out=C[0]);
+    Mux(a=false, b=segCcorr[1], sel=cross, out=C[1]);
+    Mux(a=false, b=segCcorr[2], sel=cross, out=C[2]);
+    Mux(a=false, b=segCcorr[3], sel=cross, out=C[3]);
+    Mux(a=false, b=segCcorr[4], sel=cross, out=C[4]);
+    Mux(a=false, b=segCcorr[5], sel=cross, out=C[5]);
+    Mux(a=false, b=segCcorr[6], sel=cross, out=C[6]);
 }
