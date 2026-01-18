@@ -3,7 +3,7 @@ CHIP CrossingDecoder {
     OUT out[7];
 
     PARTS:
-    // ===== Segment C[0] =====
+    // Segment out[0]
     Mux(a=true,  b=false, sel=in[0], out=c0_01);
     Mux(a=true,  b=true,  sel=in[0], out=c0_23);
     Mux(a=false, b=true,  sel=in[0], out=c0_45);
@@ -21,9 +21,9 @@ CHIP CrossingDecoder {
     Mux(a=c0_03, b=c0_47, sel=in[2], out=c0_07);
     Mux(a=c0_8b, b=c0_cf, sel=in[2], out=c0_8f);
 
-    Mux(a=c0_07, b=c0_8f, sel=in[3], out=C[0]);
+    Mux(a=c0_07, b=c0_8f, sel=in[3], out=out[0]);
 
-    // ===== Segment C[1] =====
+    // Segment out[1]
     Mux(a=true,  b=false, sel=in[0], out=c1_01);
     Mux(a=false, b=false, sel=in[0], out=c1_23);
     Mux(a=true,  b=true,  sel=in[0], out=c1_45);
@@ -41,9 +41,9 @@ CHIP CrossingDecoder {
     Mux(a=c1_03, b=c1_47, sel=in[2], out=c1_07);
     Mux(a=c1_8b, b=c1_cf, sel=in[2], out=c1_8f);
 
-    Mux(a=c1_07, b=c1_8f, sel=in[3], out=C[1]);
+    Mux(a=c1_07, b=c1_8f, sel=in[3], out=out[1]);
 
-    // ===== Segment C[2] =====
+    // Segment out[2]
     Mux(a=true,  b=true,  sel=in[0], out=c2_01);
     Mux(a=true,  b=true,  sel=in[0], out=c2_23);
     Mux(a=true,  b=false, sel=in[0], out=c2_45);
@@ -61,9 +61,9 @@ CHIP CrossingDecoder {
     Mux(a=c2_03, b=c2_47, sel=in[2], out=c2_07);
     Mux(a=c2_8b, b=c2_cf, sel=in[2], out=c2_8f);
 
-    Mux(a=c2_07, b=c2_8f, sel=in[3], out=C[2]);
+    Mux(a=c2_07, b=c2_8f, sel=in[3], out=out[2]);
 
-    // ===== Segment C[3] =====
+    // Segment out[3]
     Mux(a=false, b=true,  sel=in[0], out=c3_01);
     Mux(a=true,  b=true,  sel=in[0], out=c3_23);
     Mux(a=true,  b=true,  sel=in[0], out=c3_45);
@@ -81,9 +81,9 @@ CHIP CrossingDecoder {
     Mux(a=c3_03, b=c3_47, sel=in[2], out=c3_07);
     Mux(a=c3_8b, b=c3_cf, sel=in[2], out=c3_8f);
 
-    Mux(a=c3_07, b=c3_8f, sel=in[3], out=C[3]);
+    Mux(a=c3_07, b=c3_8f, sel=in[3], out=out[3]);
 
-    // ===== Segment C[4] =====
+    // Segment out[4]
     Mux(a=true,  b=false, sel=in[0], out=c4_01);
     Mux(a=true,  b=true,  sel=in[0], out=c4_23);
     Mux(a=true,  b=true,  sel=in[0], out=c4_45);
@@ -101,9 +101,9 @@ CHIP CrossingDecoder {
     Mux(a=c4_03, b=c4_47, sel=in[2], out=c4_07);
     Mux(a=c4_8b, b=c4_cf, sel=in[2], out=c4_8f);
 
-    Mux(a=c4_07, b=c4_8f, sel=in[3], out=C[4]);
+    Mux(a=c4_07, b=c4_8f, sel=in[3], out=out[4]);
 
-    // ===== Segment C[5] =====
+    // Segment out[5]
     Mux(a=true,  b=true,  sel=in[0], out=c5_01);
     Mux(a=false, b=false, sel=in[0], out=c5_23);
     Mux(a=true,  b=true,  sel=in[0], out=c5_45);
@@ -121,9 +121,9 @@ CHIP CrossingDecoder {
     Mux(a=c5_03, b=c5_47, sel=in[2], out=c5_07);
     Mux(a=c5_8b, b=c5_cf, sel=in[2], out=c5_8f);
 
-    Mux(a=c5_07, b=c5_8f, sel=in[3], out=C[5]);
+    Mux(a=c5_07, b=c5_8f, sel=in[3], out=out[5]);
 
-    // ===== Segment C[6] =====
+    // Segment out[6]
     Mux(a=true,  b=false, sel=in[0], out=c6_01);
     Mux(a=true,  b=false, sel=in[0], out=c6_23);
     Mux(a=false, b=true,  sel=in[0], out=c6_45);
@@ -141,5 +141,5 @@ CHIP CrossingDecoder {
     Mux(a=c6_03, b=c6_47, sel=in[2], out=c6_07);
     Mux(a=c6_8b, b=c6_cf, sel=in[2], out=c6_8f);
 
-    Mux(a=c6_07, b=c6_8f, sel=in[3], out=C[6]);
+    Mux(a=c6_07, b=c6_8f, sel=in[3], out=out[6]);
 }
