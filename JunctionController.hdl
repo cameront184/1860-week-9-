@@ -1,60 +1,54 @@
 CHIP JunctionController {
-    IN  PowerOn;
+    IN PowerOn;
     OUT X[3], Z[3];
 
     PARTS:
+    // --------------------------------------------------
+    // State register (2-bit counter: 0–3)
+    // --------------------------------------------------
+    Bit(in=next0, load=PowerOn, out=s0);
+    Bit(in=next1, load=PowerOn, out=s1);
 
-    Bit(in=nextS0, load=true, out=s0);
-    Bit(in=nextS1, load=true, out=s1);
-    Bit(in=nextS2, load=true, out=s2);
+    // Increment logic
+    Not(in=s0, out=ns0);
+    Xor(a=s0, b=s1, out=next0);
+    And(a=s0, b=s1, out=carry);
+    Xor(a=carry, b=false, out=next1);
 
-    Not(in=s0, out=inc0);
-    Xor(a=s0, b=s1, out=inc1);
-    And(a=s0, b=s1, out=carry1);
-    Xor(a=carry1, b=s2, out=inc2);
-
-    Mux(a=s0, b=inc0, sel=PowerOn, out=nextS0);
-    Mux(a=s1, b=inc1, sel=PowerOn, out=nextS1);
-    Mux(a=s2, b=inc2, sel=PowerOn, out=nextS2);
-
+    // --------------------------------------------------
+    // Decode states
+    // s1 s0
+    // 0  0 → state0
+    // 0  1 → state1
+    // 1  0 → state2
+    // 1  1 → state3
+    // --------------------------------------------------
     Not(in=s0, out=ns0);
     Not(in=s1, out=ns1);
-    Not(in=s2, out=ns2);
 
-    And(a=ns2, b=ns1, out=t00);
-    And(a=t00, b=ns0, out=st0);
+    And(a=ns1, b=ns0, out=st0);
+    And(a=ns1, b=s0,  out=st1);
+    And(a=s1,  b=ns0, out=st2);
+    And(a=s1,  b=s0,  out=st3);
 
-    And(a=t00, b=s0,  out=st1);
+    // --------------------------------------------------
+    // X traffic light
+    // --------------------------------------------------
+    // Green in state0
+    Or(a=st0, b=false, out=X[0]);
+    // Amber in state1
+    Or(a=st1, b=false, out=X[1]);
+    // Red in state2 or state3
+    Or(a=st2, b=st3, out=X[2]);
 
-    And(a=ns2, b=s1, out=t01);
-    And(a=t01, b=ns0, out=st2);
-    And(a=t01, b=s0,  out=st3);
-
-    And(a=s2,  b=ns1, out=t10);
-    And(a=t10, b=ns0, out=st4);
-    And(a=t10, b=s0,  out=st5);
-
-    And(a=s2,  b=s1, out=t11);
-    And(a=t11, b=ns0, out=st6);
-    And(a=t11, b=s0,  out=st7);
-
-    Or(a=st0, b=st1, out=xr01);
-    Or(a=st4, b=st5, out=xr45);
-    Or(a=st6, b=st7, out=xr67);
-    Or(a=xr01, b=xr45, out=xr0145);
-    Or(a=xr0145, b=xr67, out=X[2]);
-
-    Or(a=st1, b=st3, out=X[1]);
-
-    Or(a=st2, b=false, out=X[0]);
-
-    Or(a=st0, b=st1, out=zr01);
-    Or(a=st2, b=st3, out=zr23);
-    Or(a=st4, b=st5, out=zr45);
-    Or(a=zr01, b=zr23, out=zr0123);
-    Or(a=zr0123, b=zr45, out=Z[2]);
-
-    Or(a=st5, b=st7, out=Z[1]);
-
-    Or(a=st6, b=false, out=Z[0]);
+    // --------------------------------------------------
+    // Z traffic light
+    // --------------------------------------------------
+    // Green in state2
+    Or(a=st2, b=false, out=Z[0]);
+    // Amber in state3
+    Or(a=st3, b=false, out=Z[1]);
+    // Red in state0 or state1
+    Or(a=st0, b=st1, out=Z[2]);
 }
+
