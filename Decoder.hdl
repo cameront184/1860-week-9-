@@ -1,77 +1,85 @@
 CHIP Decoder {
-    IN  in[4];
+    IN in[4];
     OUT a, b, c, d, e, f, g;
 
     PARTS:
-    // Inputs
     Not(in=in[0], out=n0);
     Not(in=in[1], out=n1);
     Not(in=in[2], out=n2);
     Not(in=in[3], out=n3);
 
-    And(a=n3, b=n2, out=t00);
-    And(a=t00, b=n1, out=t01);
-    And(a=t01, b=n0, out=d0);
-    And(a=t01, b=in[0], out=d1);
-    And(a=n3, b=n2, out=t10);
-    And(a=t10, b=in[1], out=t11);
-    And(a=t11, b=n0, out=d2);
-    And(a=t11, b=in[0], out=d3);
-    And(a=n3, b=in[2], out=t20);
-    And(a=t20, b=n1, out=t21);
-    And(a=t21, b=n0, out=d4);
-    And(a=t21, b=in[0], out=d5);
-    And(a=n3, b=in[2], out=t30);
-    And(a=t30, b=in[1], out=t31);
-    And(a=t31, b=n0, out=d6);
-    And(a=t31, b=in[0], out=d7);
-    And(a=in[3], b=n2, out=t40);
-    And(a=t40, b=n1, out=t41);
-    And(a=t41, b=n0, out=d8);
-    And(a=t41, b=in[0], out=d9);
+    And(a=n3, b=n2, out=t032);
+    And(a=t032, b=n1, out=t0321);
+    And(a=t0321, b=n0, out=d0);
+    And(a=t0321, b=in[0], out=d1);
+    And(a=t032, b=in[1], out=t032_1);
+    And(a=t032_1, b=n0, out=d2);
+    And(a=t032_1, b=in[0], out=d3);
+    And(a=n3, b=in[2], out=t03_2);
+    And(a=t03_2, b=n1, out=t03_21);
+    And(a=t03_21, b=n0, out=d4);
+    And(a=t03_21, b=in[0], out=d5);
+    And(a=t03_2, b=in[1], out=t03_2_1);
+    And(a=t03_2_1, b=n0, out=d6);
+    And(a=t03_2_1, b=in[0], out=d7);
+    And(a=in[3], b=n2, out=t3_2);
+    And(a=t3_2, b=n1, out=t3_21);
+    And(a=t3_21, b=n0, out=d8);
+    And(a=t3_21, b=in[0], out=d9);
 
-    // a
-    Or(a=d0, b=d2, out=aa02);
-    Or(a=d3, b=d5, out=aa35);
-    Or(a=d6, b=d7, out=aa67);
-    Or(a=d8, b=d9, out=aa89);
-    Or(a=aa02, b=aa35, out=aa0235);
-    Or(a=aa67, b=aa89, out=aa6789);
-    Or(a=aa0235, b=aa6789, out=a);
+    // a 
+    Or(a=d0, b=d1, out=a01);
+    Or(a=d3, b=d4, out=a34);
+    Or(a=d5, b=d6, out=a56);
+    Or(a=d7, b=d8, out=a78);
+    Or(a=a01, b=a34, out=a0134);
+    Or(a=a56, b=a78, out=a5678);
+    Or(a=a0134, b=a5678, out=a01345678);
+    Or(a=a01345678, b=d9, out=a);
+
     // b
-    Or(a=d0, b=d4, out=bb04);
-    Or(a=d5, b=d6, out=bb56);
-    Or(a=d8, b=d9, out=bb89);
-    Or(a=bb04, b=bb56, out=bb0456);
-    Or(a=bb0456, b=bb89, out=b);
+    Or(a=d2, b=d3, out=b23);
+    Or(a=d4, b=d5, out=b45);
+    Or(a=d6, b=d8, out=b68);
+    Or(a=b23, b=b45, out=b2345);
+    Or(a=b68, b=d9, out=b689);
+    Or(a=b2345, b=b689, out=b);
+
     // c
-    Or(a=d0, b=d2, out=cc02);
-    Or(a=d6, b=d8, out=cc68);
-    Or(a=cc02, b=cc68, out=c);
+    Or(a=d0, b=d1, out=c01);
+    Or(a=d2, b=d3, out=c23);
+    Or(a=d4, b=d7, out=c47);
+    Or(a=d8, b=d9, out=c89);
+    Or(a=c01, b=c23, out=c0123);
+    Or(a=c47, b=c89, out=c4789);
+    Or(a=c0123, b=c4789, out=c);
+
     // d
-    Or(a=d2, b=d3, out=dd23);
-    Or(a=d5, b=d6, out=dd56);
-    Or(a=d8, b=d9, out=dd89);
-    Or(a=dd23, b=dd56, out=dd2356);
-    Or(a=dd2356, b=dd89, out=dd235689);
-    Or(a=dd235689, b=d0, out=d);
+    Or(a=d0, b=d2, out=d02);
+    Or(a=d3, b=d5, out=d35);
+    Or(a=d6, b=d8, out=d68);
+    Or(a=d02, b=d35, out=d0235);
+    Or(a=d68, b=d9, out=d689);
+    Or(a=d0235, b=d689, out=d);
+
     // e
-    Or(a=d0, b=d2, out=ee02);
-    Or(a=d3, b=d6, out=ee36);
-    Or(a=d8, b=d9, out=ee89);
-    Or(a=ee02, b=ee36, out=ee0236);
-    Or(a=ee0236, b=ee89, out=e);
+    Or(a=d0, b=d2, out=e02);
+    Or(a=d6, b=d8, out=e68);
+    Or(a=e02, b=e68, out=e);
+
     // f
-    Or(a=d0, b=d3, out=ff03);
-    Or(a=d4, b=d5, out=ff45);
-    Or(a=d6, b=d8, out=ff68);
-    Or(a=ff03, b=ff45, out=ff0345);
-    Or(a=ff0345, b=ff68, out=ff034568);
-    Or(a=ff034568, b=d9, out=f);
+    Or(a=d0, b=d2, out=f02);
+    Or(a=d3, b=d5, out=f35);
+    Or(a=d6, b=d7, out=f67);
+    Or(a=d8, b=d9, out=f89);
+    Or(a=f02, b=f35, out=f0235);
+    Or(a=f67, b=f89, out=f6789);
+    Or(a=f0235, b=f6789, out=f);
+
     // g
-    Or(a=d0, b=d2, out=gg02);
-    Or(a=d4, b=d7, out=gg47);
-    Or(a=d8, b=d9, out=gg89);
-    Or(a=gg02, b=gg47, out=gg0247);
-    Or(a=gg0247, b=gg89, out=g);
+    Or(a=d0, b=d4, out=g04);
+    Or(a=d5, b=d6, out=g56);
+    Or(a=d8, b=d9, out=g89);
+    Or(a=g04, b=g56, out=g0456);
+    Or(a=g0456, b=g89, out=g);
 }
