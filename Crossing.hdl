@@ -1,18 +1,20 @@
-
 CHIP Crossing {
     IN PowerOn, Button;
     OUT X[3], Z[3], ButtonPressed, Wait, C[7];
 
     PARTS:
-
-   Or(a=latchOut, b=Button, out=latchSet);
+    
+    // Button latch
+    Or(a=latchOut, b=Button, out=latchSet);
     And(a=latchSet, b=notEndOfCountdown, out=latchIn);
     DFF(in=latchIn, out=latchOut);
     
+    // when button is pressed buttonpressed = 1
     And(a=latchOut, b=true, out=ButtonPressed);
 
     Not(in=PowerOn, out=notPowerOn);
     
+    // Detect the end of normal cycle
     Not(in=q3, out=notq3);
     Not(in=q4, out=notq4);
     And(a=q2, b=q1, out=q2andq1);
@@ -20,6 +22,7 @@ CHIP Crossing {
     And(a=notq3, b=notq4, out=highBitsZero);
     And(a=highBitsZero, b=q2q1q0, out=isState7);
     
+    // Detect the end of countdown
     Not(in=q2, out=notq2);
     Not(in=q1, out=notq1);
     And(a=q4, b=notq3, out=s17a);
@@ -28,24 +31,29 @@ CHIP Crossing {
     And(a=s17c, b=q0, out=isState17);
     Not(in=isState17, out=notEndOfCountdown);
     
+    // Reset counter at state 7 if button isnt pressed
     Not(in=latchOut, out=notLatched);
     And(a=isState7, b=notLatched, out=resetAtState7);
     
+    // Reset when the power is off or the countdown finished or skip the countdown
     Or(a=notPowerOn, b=isState17, out=reset1);
     Or(a=reset1, b=resetAtState7, out=resetPC);
     
+    // The Program Counter increments each clock cycle when PowerOn=1
     PC(in=false, load=false, inc=PowerOn, reset=resetPC, 
        out[0]=q0, out[1]=q1, out[2]=q2, out[3]=q3, out[4]=q4);
 
     Or(a=q3, b=q4, out=inCountdown);
     Not(in=inCountdown, out=inNormal);
     
+    //first countdown state
     And(a=q3, b=notq4, out=q3andnotq4);
     And(a=notq2, b=notq1, out=notq2andnotq1);
     And(a=q3andnotq4, b=notq2andnotq1, out=state8check);
     Not(in=q0, out=notq0);
     And(a=state8check, b=notq0, out=isState8);
 
+    // Traffic Light Z
     Or(a=q2, b=notq1, out=zRedNormal);
     Or(a=zRedNormal, b=inCountdown, out=Z[2]);
     
@@ -56,6 +64,7 @@ CHIP Crossing {
     And(a=temp1, b=notq0, out=zGreenNormal);
     And(a=zGreenNormal, b=inNormal, out=Z[0]);
     
+    // Traffic Light X
     Not(in=q2andq1, out=xRedNormal);
     Or(a=xRedNormal, b=inCountdown, out=X[2]);
     
@@ -65,15 +74,22 @@ CHIP Crossing {
     And(a=q2andq1, b=notq0, out=xGreenNormal);
     And(a=xGreenNormal, b=inNormal, out=X[0]);
 
+    // when Wait=1 during the normal cycle the pedestrians must wait
+    // When Wait=0 during countdown they can cross
     And(a=inNormal, b=true, out=Wait);
     
+    // 7 segment display
+
     And(a=isState7, b=latchOut, out=resetDisplayCounter);
     
+    // Decrement during the countdown
     Not(in=resetDisplayCounter, out=notResetDisp);
     And(a=inCountdown, b=notResetDisp, out=shouldDec);
     
+    // use DisplayCounter counts down from 9 to 0
     DisplayCounter(dec=shouldDec, reset=resetDisplayCounter, a=dispA, b=dispB, c=dispC, d=dispD, e=dispE, f=dispF, g=dispG);
     
+    // Show the display only during countdown
     And(a=dispA, b=inCountdown, out=C[0]);
     And(a=dispB, b=inCountdown, out=C[1]);
     And(a=dispC, b=inCountdown, out=C[2]);
