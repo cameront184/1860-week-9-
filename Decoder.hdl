@@ -2,127 +2,121 @@
 
 
 CHIP Decoder {
-    IN in[4];
+    IN  in[4];
     OUT a, b, c, d, e, f, g;
+
     PARTS:
-    Not(in=in[3], out=ak1);
-    Not(in=in[2], out=ak2);
-    Not(in=in[1], out=ak3);
-    Not(in=in[0], out=ak4);
-    And(a=ak1, b=ak2, out=ak5);
-    And(a=ak5, b=ak4, out=ak6);
-    And(a=ak5, b=in[1], out=ak7);
-    Or(a=ak6, b=ak7, out=ak8);
-    And(a=in[2], b=in[1], out=ak9);
-    And(a=ak9, b=ak4, out=ak10);
-    Or(a=ak8, b=ak10, out=ak11);
-    And(a=in[2], b=ak3, out=ak12);
-    And(a=ak12, b=in[0], out=ak13);
-    Or(a=ak11, b=ak13, out=ak14);
-    And(a=in[3], b=ak3, out=ak15);
-    And(a=ak15, b=ak4, out=ak16);
-    Or(a=ak14, b=ak16, out=ak17);
-    And(a=in[3], b=ak2, out=ak18);
-    And(a=ak18, b=in[0], out=ak19);
-    Or(a=ak17, b=ak19, out=a);
-    Not(in=in[3], out=bNA);
-    Not(in=in[2], out=bNB);
-    Not(in=in[1], out=bNC);
-    Not(in=in[0], out=bND);
-    And(a=in[3], b=bNB, out=bp1);
-    And(a=bNC, b=bND, out=bp2);
-    And(a=in[2], b=bND, out=bp3);
-    And(a=in[3], b=in[1], out=bp4);
-    And(a=bNA, b=in[2], out=bp51);
-    And(a=bp51, b=bNC, out=bp5);
-    Or(a=bp1, b=bp2, out=bx);
-    Or(a=bp3, b=bp4, out=by);
-    Or(a=bx, b=by, out=bw);
-    Or(a=bw, b=bp5, out=b);
-    Not(in=in[3], out=cx);
-    Not(in=in[2], out=cy);
-    Not(in=in[1], out=cz);
-    Not(in=in[0], out=ce);
-    And(a=cx, b=cy, out=co1);
-    And(a=cx, b=cz, out=co2);
-    And(a=co2, b=ce, out=co3);
-    Or(a=co1, b=co3, out=co4);
-    And(a=cx, b=in[1], out=co5);
-    And(a=co5, b=in[0], out=co6);
-    Or(a=co4, b=co6, out=co7);
-    And(a=in[3], b=cz, out=co8);
-    And(a=co8, b=in[0], out=co9);
-    Or(a=co7, b=co9, out=co10);
-    And(a=in[3], b=cy, out=co11);
-    And(a=co11, b=ce, out=co12);
-    Or(a=co10, b=co12, out=c);
-    Not(in=in[3], out=dNA);
-    Not(in=in[2], out=dNB);
-    Not(in=in[1], out=dNC);
-    Not(in=in[0], out=dND);
-    And(a=in[3], b=dNB, out=dp1);
-    And(a=in[1], b=dND, out=dp2);
-    And(a=in[3], b=in[0], out=dp3);
-    And(a=dNB, b=in[1], out=dp4);
-    And(a=dNA, b=in[2], out=dp51);
-    And(a=dp51, b=dNC, out=dp5);
-    Or(a=dp1, b=dp2, out=dx);
-    Or(a=dp3, b=dp4, out=dy);
-    Or(a=dx, b=dy, out=dw);
-    Or(a=dw, b=dp5, out=d);
-    Not(in=in[3], out=ex);
-    Not(in=in[2], out=ey);
-    Not(in=in[1], out=ez);
-    Not(in=in[0], out=ek);
-    And(a=in[3], b=ez, out=eu);
-    And(a=eu, b=in[0], out=el);
-    And(a=in[3], b=ey, out=ef);
-    Or(a=el, b=ef, out=et);
-    And(a=ex, b=in[2], out=ej);
-    Or(a=et, b=ej, out=eq);
-    And(a=ex, b=ez, out=eg);
-    And(a=eg, b=ek, out=en);
-    Or(a=eq, b=en, out=ep);
-    And(a=ex, b=ey, out=ew);
-    And(a=ew, b=in[0], out=ec1);
-    Or(a=ep, b=ec1, out=e);
-    Not(in=in[3], out=fp1);
-    Not(in=in[2], out=fp2);
-    Not(in=in[1], out=fp3);
-    Not(in=in[0], out=fp4);
-    And(a=fp1, b=fp2, out=fp5);
-    And(a=fp5, b=fp4, out=fp6);
-    And(a=in[1], b=fp4, out=fp7);
-    Or(a=fp6, b=fp7, out=fp8);
-    And(a=fp1, b=in[2], out=fp9);
-    And(a=fp9, b=in[0], out=fp10);
-    Or(a=fp8, b=fp10, out=fp11);
-    And(a=fp1, b=in[1], out=fp12);
-    And(a=fp12, b=in[0], out=fp13);
-    Or(a=fp11, b=fp13, out=fp14);
-    And(a=in[2], b=in[1], out=fp15);
-    And(a=fp15, b=in[0], out=fp16);
-    Or(a=fp14, b=fp16, out=fp17);
-    And(a=in[3], b=fp3, out=fp18);
-    And(a=fp18, b=fp4, out=fp19);
-    Or(a=fp17, b=fp19, out=fp20);
-    And(a=in[3], b=fp2, out=fp21);
-    And(a=fp21, b=fp3, out=fp22);
-    Or(a=fp20, b=fp22, out=f);
-    Not(in=in[3], out=gA);
-    Not(in=in[2], out=gB);
-    Not(in=in[1], out=gC);
-    Not(in=in[0], out=gD);
-    And(a=gA, b=gB, out=gAB);
-    And(a=gAB, b=gD, out=gABD);
-    And(a=in[1], b=gD, out=gCD);
-    Or(a=gABD, b=gCD, out=gout1);
-    And(a=in[3], b=in[2], out=gAB2);
-    Or(a=gout1, b=gAB2, out=gout2);
-    And(a=in[3], b=in[1], out=gAC);
-    And(a=gAC, b=in[0], out=gACD);
-    Or(a=gout2, b=gACD, out=gout3);
-    And(a=in[3], b=gC, out=gAC2);
-    And(a=gAC2, b=gD, out=gACD2);
-    Or(a=gout3, b=gACD2, out=g);
+    // Inputs
+    Not(in=in[0], out=n0);
+    Not(in=in[1], out=n1);
+    Not(in=in[2], out=n2);
+    Not(in=in[3], out=n3);
+
+    // Decode digits d0..d9 (we only care about 0..9)
+    // d0 = 0000
+    And(a=n3, b=n2, out=t00);
+    And(a=t00, b=n1, out=t01);
+    And(a=t01, b=n0, out=d0);
+
+    // d1 = 0001
+    And(a=t01, b=in[0], out=d1);
+
+    // d2 = 0010
+    And(a=n3, b=n2, out=t10);
+    And(a=t10, b=in[1], out=t11);
+    And(a=t11, b=n0, out=d2);
+
+    // d3 = 0011
+    And(a=t11, b=in[0], out=d3);
+
+    // d4 = 0100
+    And(a=n3, b=in[2], out=t20);
+    And(a=t20, b=n1, out=t21);
+    And(a=t21, b=n0, out=d4);
+
+    // d5 = 0101
+    And(a=t21, b=in[0], out=d5);
+
+    // d6 = 0110
+    And(a=n3, b=in[2], out=t30);
+    And(a=t30, b=in[1], out=t31);
+    And(a=t31, b=n0, out=d6);
+
+    // d7 = 0111
+    And(a=t31, b=in[0], out=d7);
+
+    // d8 = 1000
+    And(a=in[3], b=n2, out=t40);
+    And(a=t40, b=n1, out=t41);
+    And(a=t41, b=n0, out=d8);
+
+    // d9 = 1001
+    And(a=t41, b=in[0], out=d9);
+
+    // ------------------------------------------------------------
+    // Segment outputs a..g
+    // Patterns expected by your assignment (from your earlier list):
+    // 0: 1111101
+    // 1: 0000101
+    // 2: 0111110
+    // 3: 0101111
+    // 4: 1000111
+    // 5: 1101011
+    // 6: 1111011
+    // 7: 0100101
+    // 8: 1111111
+    // 9: 1101111
+    // ------------------------------------------------------------
+
+    // a: ON for 0,2,3,5,6,7,8,9 (off for 1,4)
+    Or(a=d0, b=d2, out=aa02);
+    Or(a=d3, b=d5, out=aa35);
+    Or(a=d6, b=d7, out=aa67);
+    Or(a=d8, b=d9, out=aa89);
+    Or(a=aa02, b=aa35, out=aa0235);
+    Or(a=aa67, b=aa89, out=aa6789);
+    Or(a=aa0235, b=aa6789, out=a);
+
+    // b: ON for 0,4,5,6,8,9 (off for 1,2,3,7)
+    Or(a=d0, b=d4, out=bb04);
+    Or(a=d5, b=d6, out=bb56);
+    Or(a=d8, b=d9, out=bb89);
+    Or(a=bb04, b=bb56, out=bb0456);
+    Or(a=bb0456, b=bb89, out=b);
+
+    // c: ON for 0,2,6,8 (off for 1,3,4,5,7,9)
+    Or(a=d0, b=d2, out=cc02);
+    Or(a=d6, b=d8, out=cc68);
+    Or(a=cc02, b=cc68, out=c);
+
+    // d: originally ON for 2,3,5,6,8,9 — but your CMP expects 0 ON too.
+    // So: ON for 0,2,3,5,6,8,9 (off for 1,4,7)
+    Or(a=d2, b=d3, out=dd23);
+    Or(a=d5, b=d6, out=dd56);
+    Or(a=d8, b=d9, out=dd89);
+    Or(a=dd23, b=dd56, out=dd2356);
+    Or(a=dd2356, b=dd89, out=dd235689);
+    Or(a=dd235689, b=d0, out=d);
+
+    // e: ON for 0,2,3,6,8,9 (off for 1,4,5,7)
+    Or(a=d0, b=d2, out=ee02);
+    Or(a=d3, b=d6, out=ee36);
+    Or(a=d8, b=d9, out=ee89);
+    Or(a=ee02, b=ee36, out=ee0236);
+    Or(a=ee0236, b=ee89, out=e);
+
+    // f: ON for 0,3,4,5,6,8,9 (off for 1,2,7)
+    Or(a=d0, b=d3, out=ff03);
+    Or(a=d4, b=d5, out=ff45);
+    Or(a=d6, b=d8, out=ff68);
+    Or(a=ff03, b=ff45, out=ff0345);
+    Or(a=ff0345, b=ff68, out=ff034568);
+    Or(a=ff034568, b=d9, out=f);
+
+    // g: ON for 0,2,4,7,8,9 (off for 1,3,5,6)
+    Or(a=d0, b=d2, out=gg02);
+    Or(a=d4, b=d7, out=gg47);
+    Or(a=d8, b=d9, out=gg89);
+    Or(a=gg02, b=gg47, out=gg0247);
+    Or(a=gg0247, b=gg89, out=g);
 }
