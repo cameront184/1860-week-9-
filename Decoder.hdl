@@ -1,6 +1,3 @@
-
-
-
 CHIP Decoder {
     IN  in[4];
     OUT a, b, c, d, e, f, g;
@@ -12,63 +9,28 @@ CHIP Decoder {
     Not(in=in[2], out=n2);
     Not(in=in[3], out=n3);
 
-    // Decode digits d0..d9 (we only care about 0..9)
-    // d0 = 0000
     And(a=n3, b=n2, out=t00);
     And(a=t00, b=n1, out=t01);
     And(a=t01, b=n0, out=d0);
-
-    // d1 = 0001
     And(a=t01, b=in[0], out=d1);
-
-    // d2 = 0010
     And(a=n3, b=n2, out=t10);
     And(a=t10, b=in[1], out=t11);
-    And(a=t11, b=n0, out=d2);
-
-    // d3 = 0011
+    And(a=t11, b=n0, out=d2)
     And(a=t11, b=in[0], out=d3);
-
-    // d4 = 0100
     And(a=n3, b=in[2], out=t20);
     And(a=t20, b=n1, out=t21);
     And(a=t21, b=n0, out=d4);
-
-    // d5 = 0101
     And(a=t21, b=in[0], out=d5);
-
-    // d6 = 0110
     And(a=n3, b=in[2], out=t30);
     And(a=t30, b=in[1], out=t31);
     And(a=t31, b=n0, out=d6);
-
-    // d7 = 0111
     And(a=t31, b=in[0], out=d7);
-
-    // d8 = 1000
     And(a=in[3], b=n2, out=t40);
     And(a=t40, b=n1, out=t41);
     And(a=t41, b=n0, out=d8);
-
-    // d9 = 1001
     And(a=t41, b=in[0], out=d9);
 
-    // ------------------------------------------------------------
-    // Segment outputs a..g
-    // Patterns expected by your assignment (from your earlier list):
-    // 0: 1111101
-    // 1: 0000101
-    // 2: 0111110
-    // 3: 0101111
-    // 4: 1000111
-    // 5: 1101011
-    // 6: 1111011
-    // 7: 0100101
-    // 8: 1111111
-    // 9: 1101111
-    // ------------------------------------------------------------
-
-    // a: ON for 0,2,3,5,6,7,8,9 (off for 1,4)
+    // a
     Or(a=d0, b=d2, out=aa02);
     Or(a=d3, b=d5, out=aa35);
     Or(a=d6, b=d7, out=aa67);
@@ -76,44 +38,37 @@ CHIP Decoder {
     Or(a=aa02, b=aa35, out=aa0235);
     Or(a=aa67, b=aa89, out=aa6789);
     Or(a=aa0235, b=aa6789, out=a);
-
-    // b: ON for 0,4,5,6,8,9 (off for 1,2,3,7)
+    // b
     Or(a=d0, b=d4, out=bb04);
     Or(a=d5, b=d6, out=bb56);
     Or(a=d8, b=d9, out=bb89);
     Or(a=bb04, b=bb56, out=bb0456);
     Or(a=bb0456, b=bb89, out=b);
-
-    // c: ON for 0,2,6,8 (off for 1,3,4,5,7,9)
+    // c
     Or(a=d0, b=d2, out=cc02);
     Or(a=d6, b=d8, out=cc68);
     Or(a=cc02, b=cc68, out=c);
-
-    // d: originally ON for 2,3,5,6,8,9 — but your CMP expects 0 ON too.
-    // So: ON for 0,2,3,5,6,8,9 (off for 1,4,7)
+    // d
     Or(a=d2, b=d3, out=dd23);
     Or(a=d5, b=d6, out=dd56);
     Or(a=d8, b=d9, out=dd89);
     Or(a=dd23, b=dd56, out=dd2356);
     Or(a=dd2356, b=dd89, out=dd235689);
     Or(a=dd235689, b=d0, out=d);
-
-    // e: ON for 0,2,3,6,8,9 (off for 1,4,5,7)
+    // e
     Or(a=d0, b=d2, out=ee02);
     Or(a=d3, b=d6, out=ee36);
     Or(a=d8, b=d9, out=ee89);
     Or(a=ee02, b=ee36, out=ee0236);
     Or(a=ee0236, b=ee89, out=e);
-
-    // f: ON for 0,3,4,5,6,8,9 (off for 1,2,7)
+    // f
     Or(a=d0, b=d3, out=ff03);
     Or(a=d4, b=d5, out=ff45);
     Or(a=d6, b=d8, out=ff68);
     Or(a=ff03, b=ff45, out=ff0345);
     Or(a=ff0345, b=ff68, out=ff034568);
     Or(a=ff034568, b=d9, out=f);
-
-    // g: ON for 0,2,4,7,8,9 (off for 1,3,5,6)
+    // g
     Or(a=d0, b=d2, out=gg02);
     Or(a=d4, b=d7, out=gg47);
     Or(a=d8, b=d9, out=gg89);
