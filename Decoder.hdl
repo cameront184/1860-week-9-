@@ -3,31 +3,54 @@ CHIP Decoder {
     OUT a, b, c, d, e, f, g;
 
     PARTS:
+
     Not(in=in[0], out=n0);
     Not(in=in[1], out=n1);
     Not(in=in[2], out=n2);
     Not(in=in[3], out=n3);
 
-    And(a=n3, b=n2, out=t032);
-    And(a=t032, b=n1, out=t0321);
-    And(a=t0321, b=n0, out=d0);
-    And(a=t0321, b=in[0], out=d1);
-    And(a=t032, b=in[1], out=t032_1);
-    And(a=t032_1, b=n0, out=d2);
-    And(a=t032_1, b=in[0], out=d3);
-    And(a=n3, b=in[2], out=t03_2);
-    And(a=t03_2, b=n1, out=t03_21);
-    And(a=t03_21, b=n0, out=d4);
-    And(a=t03_21, b=in[0], out=d5);
-    And(a=t03_2, b=in[1], out=t03_2_1);
-    And(a=t03_2_1, b=n0, out=d6);
-    And(a=t03_2_1, b=in[0], out=d7);
-    And(a=in[3], b=n2, out=t3_2);
-    And(a=t3_2, b=n1, out=t3_21);
-    And(a=t3_21, b=n0, out=d8);
-    And(a=t3_21, b=in[0], out=d9);
+    // Decoded digit (0 to 9)
+    And(a=n3, b=n2, out=d0a);
+    And(a=n1, b=n0, out=d0b);
+    And(a=d0a, b=d0b, out=d0);
 
-    // a 
+    And(a=n3, b=n2, out=d1a);
+    And(a=n1, b=in[0], out=d1b);
+    And(a=d1a, b=d1b, out=d1);
+
+    And(a=n3, b=n2, out=d2a);
+    And(a=in[1], b=n0, out=d2b);
+    And(a=d2a, b=d2b, out=d2);
+
+    And(a=n3, b=n2, out=d3a);
+    And(a=in[1], b=in[0], out=d3b);
+    And(a=d3a, b=d3b, out=d3);
+
+    And(a=n3, b=in[2], out=d4a);
+    And(a=n1, b=n0, out=d4b);
+    And(a=d4a, b=d4b, out=d4);
+
+    And(a=n3, b=in[2], out=d5a);
+    And(a=n1, b=in[0], out=d5b);
+    And(a=d5a, b=d5b, out=d5);
+
+    And(a=n3, b=in[2], out=d6a);
+    And(a=in[1], b=n0, out=d6b);
+    And(a=d6a, b=d6b, out=d6);
+
+    And(a=n3, b=in[2], out=d7a);
+    And(a=in[1], b=in[0], out=d7b);
+    And(a=d7a, b=d7b, out=d7);
+
+    And(a=in[3], b=n2, out=d8a);
+    And(a=n1, b=n0, out=d8b);
+    And(a=d8a, b=d8b, out=d8);
+
+    And(a=in[3], b=n2, out=d9a);
+    And(a=n1, b=in[0], out=d9b);
+    And(a=d9a, b=d9b, out=d9);
+
+    // a
     Or(a=d0, b=d1, out=a01);
     Or(a=d3, b=d4, out=a34);
     Or(a=d5, b=d6, out=a56);
@@ -55,12 +78,12 @@ CHIP Decoder {
     Or(a=c0123, b=c4789, out=c);
 
     // d
-    Or(a=d0, b=d2, out=d02);
-    Or(a=d3, b=d5, out=d35);
-    Or(a=d6, b=d8, out=d68);
-    Or(a=d02, b=d35, out=d0235);
-    Or(a=d68, b=d9, out=d689);
-    Or(a=d0235, b=d689, out=d);
+    Or(a=d0, b=d2, out=dd02);
+    Or(a=d3, b=d5, out=dd35);
+    Or(a=d6, b=d8, out=dd68);
+    Or(a=dd02, b=dd35, out=dd0235);
+    Or(a=dd68, b=d9, out=dd689);
+    Or(a=dd0235, b=dd689, out=d);
 
     // e
     Or(a=d0, b=d2, out=e02);
