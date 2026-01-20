@@ -15,7 +15,7 @@ CHIP Decoder {
     And(a=t01, b=in[0], out=d1);
     And(a=n3, b=n2, out=t10);
     And(a=t10, b=in[1], out=t11);
-    And(a=t11, b=n0, out=d2)
+    And(a=t11, b=n0, out=d2);
     And(a=t11, b=in[0], out=d3);
     And(a=n3, b=in[2], out=t20);
     And(a=t20, b=n1, out=t21);
