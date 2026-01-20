@@ -3,13 +3,13 @@ CHIP Decoder {
     OUT a, b, c, d, e, f, g;
 
     PARTS:
-
+   
     Not(in=in[0], out=n0);
     Not(in=in[1], out=n1);
     Not(in=in[2], out=n2);
     Not(in=in[3], out=n3);
 
-    // Decoded digit (0 to 9)
+    // Decoded digits (0 to 9)
     And(a=n3, b=n2, out=d0a);
     And(a=n1, b=n0, out=d0b);
     And(a=d0a, b=d0b, out=d0);
@@ -99,7 +99,7 @@ CHIP Decoder {
     Or(a=f67, b=f89, out=f6789);
     Or(a=f0235, b=f6789, out=f);
 
-    // g
+    //g
     Or(a=d0, b=d4, out=g04);
     Or(a=d5, b=d6, out=g56);
     Or(a=d8, b=d9, out=g89);
