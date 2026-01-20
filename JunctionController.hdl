@@ -3,52 +3,20 @@ CHIP JunctionController {
     OUT X[3], Z[3];
 
     PARTS:
-    // --------------------------------------------------
-    // State register (2-bit counter: 0–3)
-    // --------------------------------------------------
-    Bit(in=next0, load=PowerOn, out=s0);
-    Bit(in=next1, load=PowerOn, out=s1);
+   
+    Not(in=PowerOn, out=notPowerOn);
+    PC(in=false, load=false, inc=PowerOn, reset=notPowerOn, out[0]=q0, out[1]=q1, out[2]=q2);
 
-    // Increment logic
-    Not(in=s0, out=ns0);
-    Xor(a=s0, b=s1, out=next0);
-    And(a=s0, b=s1, out=carry);
-    Xor(a=carry, b=false, out=next1);
+    Not(in=q0, out=notq0);
+    Not(in=q1, out=notq1);
+    Not(in=q2, out=notq2);
 
-    // --------------------------------------------------
-    // Decode states
-    // s1 s0
-    // 0  0 → state0
-    // 0  1 → state1
-    // 1  0 → state2
-    // 1  1 → state3
-    // --------------------------------------------------
-    Not(in=s0, out=ns0);
-    Not(in=s1, out=ns1);
-
-    And(a=ns1, b=ns0, out=st0);
-    And(a=ns1, b=s0,  out=st1);
-    And(a=s1,  b=ns0, out=st2);
-    And(a=s1,  b=s0,  out=st3);
-
-    // --------------------------------------------------
-    // X traffic light
-    // --------------------------------------------------
-    // Green in state0
-    Or(a=st0, b=false, out=X[0]);
-    // Amber in state1
-    Or(a=st1, b=false, out=X[1]);
-    // Red in state2 or state3
-    Or(a=st2, b=st3, out=X[2]);
-
-    // --------------------------------------------------
-    // Z traffic light
-    // --------------------------------------------------
-    // Green in state2
-    Or(a=st2, b=false, out=Z[0]);
-    // Amber in state3
-    Or(a=st3, b=false, out=Z[1]);
-    // Red in state0 or state1
-    Or(a=st0, b=st1, out=Z[2]);
+    Or(a=q2, b=notq1, out=X[2]);
+    And(a=notq2, b=q0, out=X[1]);
+    And(a=notq2, b=q1, out=temp1);
+    And(a=temp1, b=notq0, out=X[0]);
+    And(a=q2, b=q1, out=q2andq1);
+    Not(in=q2andq1, out=Z[2]);
+    And(a=q2, b=q0, out=Z[1]);
+    And(a=q2andq1, b=notq0, out=Z[0]);
 }
-
