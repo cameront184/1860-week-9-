@@ -1,100 +1,252 @@
+// Crossing.hdl - Traffic Light Controller with Pedestrian Crossing
+// 
+// This chip controls a junction with two sets of traffic lights (X and Z)
+// and a pedestrian crossing feature. When a pedestrian presses the button,
+// the system waits for the current traffic cycle to complete, then sets
+// both lights to red and displays a 9-to-0 countdown on a 7-segment display.
+
 CHIP Crossing {
     IN PowerOn, Button;
-    OUT X[3], Z[3], ButtonPressed, Wait, C[7];
+    OUT ButtonPressed, Wait, X[3], Z[3], C[7];
 
     PARTS:
     
-    // Button latch
-    Or(a=latchOut, b=Button, out=latchSet);
-    And(a=latchSet, b=notEndOfCountdown, out=latchIn);
-    DFF(in=latchIn, out=latchOut);
+    // =========================================================================
+    // PHASE CONTROL
+    // =========================================================================
+    // The junction alternates between two phases:
+    // - Phase 0: Z lights are active (cycling through green->amber->red)
+    // - Phase 1: X lights are active (cycling through green->amber->red)
+    // A DFF stores the current phase, and PhaseNext determines the next state
     
-    // when button is pressed buttonpressed = 1
-    And(a=latchOut, b=true, out=ButtonPressed);
+    DFF(in=PhaseNext, out=CurrentPhase);
+    
+    // ZActive is true when we're in phase 0 (Z's turn)
+    Not(in=PhaseNext, out=ZActive);
+    And(a=ZActive, b=PowerOn, out=ZEnable);
+    
+    // XActive is true when we're in phase 1 (X's turn)
+    Or(a=PhaseNext, b=false, out=XActive);
+    And(a=XActive, b=PowerOn, out=XEnable);
+    
+    // During pedestrian mode, we freeze the traffic lights so they don't
+    // continue cycling - both stay red until the countdown finishes
+    Not(in=PedestrianMode, out=NotPedestrian);
+    And(a=ZEnable, b=NotPedestrian, out=ZEnableFrozen);
+    And(a=XEnable, b=NotPedestrian, out=XEnableFrozen);
 
-    Not(in=PowerOn, out=notPowerOn);
+    // =========================================================================
+    // TRAFFIC LIGHTS
+    // =========================================================================
+    // TrafficLight3 is a helper chip that cycles through: red -> red+amber -> green -> amber -> red
+    // We use two instances, one for each direction (X and Z)
     
-    // Detect the end of normal cycle
-    Not(in=q3, out=notq3);
-    Not(in=q4, out=notq4);
-    And(a=q2, b=q1, out=q2andq1);
-    And(a=q2andq1, b=q0, out=q2q1q0);
-    And(a=notq3, b=notq4, out=highBitsZero);
-    And(a=highBitsZero, b=q2q1q0, out=isState7);
+    TrafficLight3(PowerOn=ZEnableFrozen, X[0]=LightX0, X[1]=LightX1, X[2]=LightX2);
+    TrafficLight3(PowerOn=XEnableFrozen, X[0]=LightZ0, X[1]=LightZ1, X[2]=LightZ2);
     
-    // Detect the end of countdown
-    Not(in=q2, out=notq2);
-    Not(in=q1, out=notq1);
-    And(a=q4, b=notq3, out=s17a);
-    And(a=notq2, b=notq1, out=s17b);
-    And(a=s17a, b=s17b, out=s17c);
-    And(a=s17c, b=q0, out=isState17);
-    Not(in=isState17, out=notEndOfCountdown);
+    // =========================================================================
+    // CYCLE COMPLETION DETECTION
+    // =========================================================================
+    // We need to know when each traffic light has completed its cycle
+    // A cycle is complete when the light returns to red-only state (100)
+    // This is detected when bit2=1 (red on) and bits 0,1=0 (green,amber off)
     
-    // Reset counter at state 7 if button isnt pressed
-    Not(in=latchOut, out=notLatched);
-    And(a=isState7, b=notLatched, out=resetAtState7);
-    
-    // Reset when the power is off or the countdown finished or skip the countdown
-    Or(a=notPowerOn, b=isState17, out=reset1);
-    Or(a=reset1, b=resetAtState7, out=resetPC);
-    
-    // The Program Counter increments each clock cycle when PowerOn=1
-    PC(in=false, load=false, inc=PowerOn, reset=resetPC, 
-       out[0]=q0, out[1]=q1, out[2]=q2, out[3]=q3, out[4]=q4);
+    // X cycle complete: LightX = 100
+    Not(in=LightX1, out=notLX1);
+    Not(in=LightX0, out=notLX0);
+    And(a=notLX1, b=notLX0, out=X10False);
+    And(a=X10False, b=LightX2, out=XCycleComplete);
 
-    Or(a=q3, b=q4, out=inCountdown);
-    Not(in=inCountdown, out=inNormal);
-    
-    //first countdown state
-    And(a=q3, b=notq4, out=q3andnotq4);
-    And(a=notq2, b=notq1, out=notq2andnotq1);
-    And(a=q3andnotq4, b=notq2andnotq1, out=state8check);
-    Not(in=q0, out=notq0);
-    And(a=state8check, b=notq0, out=isState8);
+    // Z cycle complete: LightZ = 100
+    Not(in=LightZ1, out=notLZ1);
+    Not(in=LightZ0, out=notLZ0);
+    And(a=notLZ1, b=notLZ0, out=Z10False);
+    And(a=Z10False, b=LightZ2, out=ZCycleComplete);
 
-    // Traffic Light Z
-    Or(a=q2, b=notq1, out=zRedNormal);
-    Or(a=zRedNormal, b=inCountdown, out=Z[2]);
+    // =========================================================================
+    // PHASE SWITCHING LOGIC
+    // =========================================================================
+    // When the active light completes its cycle, we switch to the other phase
+    // - If in phase 0 (X active) and X completes -> switch to phase 1
+    // - If in phase 1 (Z active) and Z completes -> switch to phase 0
+    // XOR flips the phase when CycleFinished is true
     
-    And(a=notq2, b=q0, out=zAmberNormal);
-    And(a=zAmberNormal, b=inNormal, out=Z[1]);
-    
-    And(a=notq2, b=q1, out=temp1);
-    And(a=temp1, b=notq0, out=zGreenNormal);
-    And(a=zGreenNormal, b=inNormal, out=Z[0]);
-    
-    // Traffic Light X
-    Not(in=q2andq1, out=xRedNormal);
-    Or(a=xRedNormal, b=inCountdown, out=X[2]);
-    
-    And(a=q2, b=q0, out=xAmberNormal);
-    And(a=xAmberNormal, b=inNormal, out=X[1]);
+    Not(in=CurrentPhase, out=notCurrentPhase);
+    And(a=notCurrentPhase, b=XCycleComplete, out=SwitchFromX);
+    And(a=CurrentPhase, b=ZCycleComplete, out=SwitchFromZ);
+    Or(a=SwitchFromX, b=SwitchFromZ, out=CycleFinished);
+    Xor(a=CurrentPhase, b=CycleFinished, out=PhaseNext);
 
-    And(a=q2andq1, b=notq0, out=xGreenNormal);
-    And(a=xGreenNormal, b=inNormal, out=X[0]);
+    // =========================================================================
+    // RAW LIGHT OUTPUTS
+    // =========================================================================
+    // Buffer the light values so we can use them in multiple places
+    // (Or with false is a common HDL trick to copy a signal)
+    
+    Or(a=LightX0, b=false, out=RawX0);
+    Or(a=LightX1, b=false, out=RawX1);
+    Or(a=LightX2, b=false, out=RawX2);
+    Or(a=LightZ0, b=false, out=RawZ0);
+    Or(a=LightZ1, b=false, out=RawZ1);
+    Or(a=LightZ2, b=false, out=RawZ2);
 
-    // when Wait=1 during the normal cycle the pedestrians must wait
-    // When Wait=0 during countdown they can cross
-    And(a=inNormal, b=true, out=Wait);
+    // =========================================================================
+    // BUTTON LATCH
+    // =========================================================================
+    // The pedestrian button needs to be "remembered" - if someone presses it,
+    // the system should remember this even after they release the button.
+    // The latch stays set until the pedestrian crossing actually starts.
+    // We also prevent new presses during an active pedestrian mode.
     
-    // 7 segment display
+    Not(in=PedestrianMode, out=CanPress);
+    And(a=Button, b=CanPress, out=ButtonPulse);
+    Or(a=ButtonPulse, b=ButtonLatchPrev, out=ButtonLatchSet);
+    Not(in=PedStart, out=HoldLatch);
+    And(a=ButtonLatchSet, b=HoldLatch, out=ButtonLatchIn);
+    DFF(in=ButtonLatchIn, out=ButtonLatchPrev);
+    
+    // ButtonPressed output stays high during pedestrian mode
+    Or(a=ButtonLatchIn, b=false, out=ButtonTemp);
+    Or(a=PedestrianMode, b=PedStart, out=KeepButtonHigh);
+    Mux(a=ButtonTemp, b=true, sel=KeepButtonHigh, out=ButtonPressed);
 
-    And(a=isState7, b=latchOut, out=resetDisplayCounter);
+    // =========================================================================
+    // Z DONE DETECTION FOR CROSSING
+    // =========================================================================
+    // The pedestrian crossing activates after Z finishes its amber phase
+    // We detect the rising edge of ZFinished (transition from 0 to 1)
+    // to trigger the pedestrian mode exactly once per cycle
     
-    // Decrement during the countdown
-    Not(in=resetDisplayCounter, out=notResetDisp);
-    And(a=inCountdown, b=notResetDisp, out=shouldDec);
+    Not(in=RawZ2, out=notRawZ2);
+    Not(in=RawZ0, out=notRawZ0);
+    And(a=notRawZ2, b=notRawZ0, out=Z20False);
+    And(a=Z20False, b=RawZ1, out=ZFinished);
+
+    // Reset detection when pedestrian mode is active
+    Mux(a=ZFinished, b=false, sel=PedestrianMode, out=ZFinishedToDFF);
+    DFF(in=ZFinishedToDFF, out=ZFinishedPrev);
+
+    // Rising edge detection: ZFinished is 1 now but was 0 before
+    Not(in=ZFinishedPrev, out=notZFinishedPrev);
+    And(a=ZFinished, b=notZFinishedPrev, out=ZFinishedRising);
+
+    // =========================================================================
+    // TRAFFIC LIGHT OUTPUT WITH PEDESTRIAN OVERRIDE
+    // =========================================================================
+    // During pedestrian mode, force both lights to RED (100)
+    // Otherwise, output the normal traffic light values
+    // Note: X and Z outputs are swapped due to how TrafficLight3 is wired
     
-    // use DisplayCounter counts down from 9 to 0
-    DisplayCounter(dec=shouldDec, reset=resetDisplayCounter, a=dispA, b=dispB, c=dispC, d=dispD, e=dispE, f=dispF, g=dispG);
+    Mux(a=RawX0, b=false, sel=PedestrianMode, out=Z[0]);
+    Mux(a=RawX1, b=false, sel=PedestrianMode, out=Z[1]);
+    Mux(a=RawX2, b=true,  sel=PedestrianMode, out=Z[2]);
+
+    Mux(a=RawZ0, b=false, sel=PedestrianMode, out=X[0]);
+    Mux(a=RawZ1, b=false, sel=PedestrianMode, out=X[1]);
+    Mux(a=RawZ2, b=true,  sel=PedestrianMode, out=X[2]);
+
+    // =========================================================================
+    // PEDESTRIAN MODE ACTIVATION
+    // =========================================================================
+    // Pedestrian mode starts when:
+    // 1. The button was previously pressed (ButtonLatchPrev = 1)
+    // 2. Z just finished its cycle (ZFinishedRising = 1)
+    // 3. We're not already in pedestrian mode
     
-    // Show the display only during countdown
-    And(a=dispA, b=inCountdown, out=C[0]);
-    And(a=dispB, b=inCountdown, out=C[1]);
-    And(a=dispC, b=inCountdown, out=C[2]);
-    And(a=dispD, b=inCountdown, out=C[3]);
-    And(a=dispE, b=inCountdown, out=C[4]);
-    And(a=dispF, b=inCountdown, out=C[5]);
-    And(a=dispG, b=inCountdown, out=C[6]);
+    And(a=ButtonLatchPrev, b=ZFinishedRising, out=PedStartRaw);
+    Not(in=PedModePrev, out=notPedModePrev);
+    And(a=PedStartRaw, b=notPedModePrev, out=PedStart);
+
+    // Delay the start signal by one clock cycle for proper synchronization
+    DFF(in=PedStart, out=PedStartDelayed);
+
+    // =========================================================================
+    // PEDESTRIAN MODE LATCH
+    // =========================================================================
+    // Once pedestrian mode starts, it stays active until the countdown finishes
+    // PedModeSet keeps the mode latched, CountdownDone releases it
+    
+    Or(a=PedStartDelayed, b=PedModePrev, out=PedModeSet);
+    Not(in=CountdownDone, out=notCountdownDone);
+    And(a=PedModeSet, b=notCountdownDone, out=PedestrianMode);
+    DFF(in=PedestrianMode, out=PedModePrev);
+
+    // =========================================================================
+    // WAIT OUTPUT
+    // =========================================================================
+    // Wait = 1 means pedestrians must wait (normal traffic operation)
+    // Wait = 0 means pedestrians can cross (pedestrian mode active)
+    
+    Not(in=PedestrianMode, out=Wait);
+
+    // =========================================================================
+    // COUNTDOWN TIMER
+    // =========================================================================
+    // DisplayCounter counts down from 9 to 0 during pedestrian mode
+    // - reset: initializes counter to 9 when pedestrian mode starts
+    // - dec: decrements counter each clock cycle during pedestrian mode
+    
+    Or(a=PedStart, b=false, out=CounterReset);
+
+    Not(in=CountdownDone, out=notDone);
+    And(a=PedestrianMode, b=notDone, out=CounterDec);
+
+    // Track if we've started counting (used for zero detection)
+    DFF(in=CounterDec, out=CounterDecPrev);
+    Or(a=CounterDec, b=CounterDecPrev, out=HasDecremented);
+
+    // DisplayCounter outputs 7-segment signals (a-g) and the raw digit value
+    DisplayCounter(dec=CounterDec, reset=CounterReset, 
+                   a=seg6, b=seg5, c=seg4, d=seg3, e=seg2, f=seg1, g=seg0,
+                   digits[0]=digit0, digits[1]=digit1, digits[2]=digit2, digits[3]=digit3);
+
+    // =========================================================================
+    // 7-SEGMENT DISPLAY OUTPUT
+    // =========================================================================
+    // Show the countdown on the display only during pedestrian mode
+    // When not in pedestrian mode, display is blank (all zeros)
+    
+    Mux(a=false, b=seg0, sel=PedestrianMode, out=C[0]);
+    Mux(a=false, b=seg1, sel=PedestrianMode, out=C[1]);
+    Mux(a=false, b=seg2, sel=PedestrianMode, out=C[2]);
+    Mux(a=false, b=seg3, sel=PedestrianMode, out=C[3]);
+    Mux(a=false, b=seg4, sel=PedestrianMode, out=C[4]);
+    Mux(a=false, b=seg5, sel=PedestrianMode, out=C[5]);
+    Mux(a=false, b=seg6, sel=PedestrianMode, out=C[6]);
+
+    // =========================================================================
+    // COUNTDOWN COMPLETION DETECTION
+    // =========================================================================
+    // Detect when the counter reaches zero to end pedestrian mode
+    // We check that all 4 digit bits are 0, but only after counting has started
+    // (to avoid false triggering at the very beginning)
+    
+    Or(a=digit0, b=false, out=d0);
+    Or(a=digit1, b=false, out=d1);
+    Or(a=digit2, b=false, out=d2);
+    Or(a=digit3, b=false, out=d3);
+
+    Not(in=d0, out=notd0);
+    Not(in=d1, out=notd1);
+    Not(in=d2, out=notd2);
+    Not(in=d3, out=notd3);
+
+    // Counter is zero when all digit bits are 0
+    And(a=notd0, b=notd1, out=low01Zero);
+    And(a=notd2, b=notd3, out=high23Zero);
+    And(a=low01Zero, b=high23Zero, out=CounterIsZero);
+
+    // Additional checks to ensure we don't trigger prematurely
+    DFF(in=PedestrianMode, out=PedModePrev2);
+    Or(a=PedestrianMode, b=PedModePrev2, out=ModeHasStarted);
+
+    Not(in=CounterReset, out=notCounterReset);
+
+    // Only signal done if: counter is zero, not being reset, mode has started, and we've counted
+    And(a=CounterIsZero, b=notCounterReset, out=ZeroNotReset);
+    And(a=ZeroNotReset, b=ModeHasStarted, out=ZeroAfterStart);
+    And(a=ZeroAfterStart, b=HasDecremented, out=CountdownDoneRaw);
+
+    // Latch the done signal
+    DFF(in=CountdownDoneRaw, out=CountdownDone);
 }

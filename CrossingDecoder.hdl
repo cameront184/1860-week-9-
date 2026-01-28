@@ -1,145 +1,147 @@
-CHIP CrossingDecoder {
-    IN in[4];
-    OUT out[7];
+
+CHIP Crossing {
+    // Kieran Chun Kit Long 201978275
+    IN PowerOn, Button;
+    OUT ButtonPressed, Wait, X[3], Z[3], C[7];
 
     PARTS:
-    // Segment out[0]
-    Mux(a=true,  b=false, sel=in[0], out=c0_01);
-    Mux(a=true,  b=true,  sel=in[0], out=c0_23);
-    Mux(a=false, b=true,  sel=in[0], out=c0_45);
-    Mux(a=true,  b=false, sel=in[0], out=c0_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c0_89);
-    Mux(a=false, b=false, sel=in[0], out=c0_ab);
-    Mux(a=false, b=false, sel=in[0], out=c0_cd);
-    Mux(a=false, b=false, sel=in[0], out=c0_ef);
+    DFF(in=NextPhase, out=Phase);
+    
+    //Directly using junction controller raw - no idea how to fix the bug I had, so I just messed with junc controller raw here
+    Not(in=NextPhase, out=digitsZ);
+    And(a=digitsZ, b=PowerOn, out=EnableZ);
 
-    Mux(a=c0_01, b=c0_23, sel=in[1], out=c0_03);
-    Mux(a=c0_45, b=c0_67, sel=in[1], out=c0_47);
-    Mux(a=c0_89, b=c0_ab, sel=in[1], out=c0_8b);
-    Mux(a=c0_cd, b=c0_ef, sel=in[1], out=c0_cf);
+    Or(a=NextPhase, b=false, out=digitsX);
+    And(a=digitsX, b=PowerOn, out=EnableX);
+    Not(in= PedMode, out= NotPed);
+    //Lights get frozen here so that I can keep them the same state after PedMode ends
+    And(a=EnableZ, b=NotPed, out=EnableZFrozen);
+    And(a=EnableX, b=NotPed, out=EnableXFrozen);
 
-    Mux(a=c0_03, b=c0_47, sel=in[2], out=c0_07);
-    Mux(a=c0_8b, b=c0_cf, sel=in[2], out=c0_8f);
+    TrafficLight3(PowerOn=EnableZFrozen, X[0]=X0, X[1]=X1, X[2]=X2);
+    TrafficLight3(PowerOn=EnableXFrozen, X[0]=Z0, X[1]=Z1, X[2]=Z2);
+    
+    //jc here specifies junction controller variables - just because i added it raw and to prevent confusion.
+    //Detect XDone (X finishes its cycle when X = 100)
+    Not(in=X1, out=nX1jc);
+    Not(in=X0, out=nX0jc);
+    And(a=nX1jc, b=nX0jc, out=X1X0Falsejc);
+    And(a=X1X0Falsejc, b=X2, out=XDone);
 
-    Mux(a=c0_07, b=c0_8f, sel=in[3], out=out[0]);
+    //detects whether the Z has finished its cycle
+    Not(in=Z1, out=nZ1jc);
+    Not(in=Z0, out=nZ0jc);
+    And(a=nZ1jc, b=nZ0jc, out=Z1Z0Falsejc);
+    And(a=Z1Z0Falsejc, b=Z2, out=ZDonejc);
 
-    // Segment out[1]
-    Mux(a=true,  b=false, sel=in[0], out=c1_01);
-    Mux(a=false, b=false, sel=in[0], out=c1_23);
-    Mux(a=true,  b=true,  sel=in[0], out=c1_45);
-    Mux(a=true,  b=true,  sel=in[0], out=c1_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c1_89);
-    Mux(a=false, b=false, sel=in[0], out=c1_ab);
-    Mux(a=false, b=false, sel=in[0], out=c1_cd);
-    Mux(a=false, b=false, sel=in[0], out=c1_ef);
+    Not(in=Phase, out=nPhase);
+    And(a=nPhase, b=XDone, out=XFlip);
+    And(a=Phase, b=ZDonejc, out=ZFlip);
+    Or(a=XFlip, b=ZFlip, out=CycleDone);
+    Xor(a=Phase, b=CycleDone, out=NextPhase);
 
-    Mux(a=c1_01, b=c1_23, sel=in[1], out=c1_03);
-    Mux(a=c1_45, b=c1_67, sel=in[1], out=c1_47);
-    Mux(a=c1_89, b=c1_ab, sel=in[1], out=c1_8b);
-    Mux(a=c1_cd, b=c1_ef, sel=in[1], out=c1_cf);
+    //outputs the raw lights (HOPEFULLY IT WORKS)
+    Or(a=X0, b=false, out=Xbase0);
+    Or(a=X1, b=false, out=Xbase1);
+    Or(a=X2, b=false, out=Xbase2);
+    Or(a=Z0, b=false, out=Zbase0);
+    Or(a=Z1, b=false, out=Zbase1);
+    Or(a=Z2, b=false, out=Zbase2);
 
-    Mux(a=c1_03, b=c1_47, sel=in[2], out=c1_07);
-    Mux(a=c1_8b, b=c1_cf, sel=in[2], out=c1_8f);
+    //button latch (THIS SHOULD WORK!!! AFTER THE 5000TH ATTEMPT!!!!!
+    Not(in=PedMode, out=AllowPress);
+    And(a=Button, b=AllowPress, out=ButtonSetPulse);
+    Or(a=ButtonSetPulse, b=PrevButtonPressed, out=ButtonSet);
+    Not(in=StartPed, out=KeepLatch);
+    And(a=ButtonSet, b=KeepLatch, out=ButtonLatchNext);
+    DFF(in=ButtonLatchNext, out=PrevButtonPressed);
+    Or(a=ButtonLatchNext, b=false, out=ButtonPressedTemp);
+    Or(a= PedMode, b= StartPed, out= HoldButton);
+    Mux(a= ButtonPressedTemp, b= true, sel= HoldButton, out= ButtonPressed);
 
-    Mux(a=c1_07, b=c1_8f, sel=in[3], out=out[1]);
 
-    // Segment out[2]
-    Mux(a=true,  b=true,  sel=in[0], out=c2_01);
-    Mux(a=true,  b=true,  sel=in[0], out=c2_23);
-    Mux(a=true,  b=false, sel=in[0], out=c2_45);
-    Mux(a=false, b=true,  sel=in[0], out=c2_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c2_89);
-    Mux(a=false, b=false, sel=in[0], out=c2_ab);
-    Mux(a=false, b=false, sel=in[0], out=c2_cd);
-    Mux(a=false, b=false, sel=in[0], out=c2_ef);
+    //zdone detection for crossing
+    //detects whether the Z has finished its cycle
+    Not(in=Zbase2, out=nZ2);
+    Not(in=Zbase0, out=nZ0);
+    And(a=nZ2, b=nZ0, out=Z2Z0False);
+    And(a=Z2Z0False, b=Zbase1, out=ZDone);
 
-    Mux(a=c2_01, b=c2_23, sel=in[1], out=c2_03);
-    Mux(a=c2_45, b=c2_67, sel=in[1], out=c2_47);
-    Mux(a=c2_89, b=c2_ab, sel=in[1], out=c2_8b);
-    Mux(a=c2_cd, b=c2_ef, sel=in[1], out=c2_cf);
+    //resets Zdone when the pedmode activates for next cycle
+    Mux(a=ZDone, b=false, sel=PedMode, out=ZDoneToDFF);
+    DFF(in=ZDoneToDFF, out=PrevZDone);
 
-    Mux(a=c2_03, b=c2_47, sel=in[2], out=c2_07);
-    Mux(a=c2_8b, b=c2_cf, sel=in[2], out=c2_8f);
+    Not(in=PrevZDone, out=nPrevZDone);
+    And(a=ZDone, b=nPrevZDone, out=ZDoneRising);
 
-    Mux(a=c2_07, b=c2_8f, sel=in[3], out=out[2]);
+    //brute force lights to red (i dont have a way to simply make it only input and output red)
+    Mux(a=Xbase0, b=false, sel=PedMode, out=Z[0]);
+    Mux(a=Xbase1, b=false, sel=PedMode, out=Z[1]);
+    Mux(a=Xbase2, b=true,  sel=PedMode, out=Z[2]);
 
-    // Segment out[3]
-    Mux(a=false, b=true,  sel=in[0], out=c3_01);
-    Mux(a=true,  b=true,  sel=in[0], out=c3_23);
-    Mux(a=true,  b=true,  sel=in[0], out=c3_45);
-    Mux(a=true,  b=true,  sel=in[0], out=c3_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c3_89);
-    Mux(a=false, b=false, sel=in[0], out=c3_ab);
-    Mux(a=false, b=false, sel=in[0], out=c3_cd);
-    Mux(a=false, b=false, sel=in[0], out=c3_ef);
+    Mux(a=Zbase0, b=false, sel=PedMode, out=X[0]);
+    Mux(a=Zbase1, b=false, sel=PedMode, out=X[1]);
+    Mux(a=Zbase2, b=true,  sel=PedMode, out=X[2]);
 
-    Mux(a=c3_01, b=c3_23, sel=in[1], out=c3_03);
-    Mux(a=c3_45, b=c3_67, sel=in[1], out=c3_47);
-    Mux(a=c3_89, b=c3_ab, sel=in[1], out=c3_8b);
-    Mux(a=c3_cd, b=c3_ef, sel=in[1], out=c3_cf);
+    //activates PedMode if ZDone and the button has been pressed (and not already active)
+    And(a=PrevButtonPressed, b=ZDoneRising, out=StartPedRaw);
+    Not(in=PrevPedMode, out=NotPedModePrev);
+    And(a=StartPedRaw, b=NotPedModePrev, out=StartPed);
 
-    Mux(a=c3_03, b=c3_47, sel=in[2], out=c3_07);
-    Mux(a=c3_8b, b=c3_cf, sel=in[2], out=c3_8f);
+    //delays the lights by one, which is a brute force fix to another bug I had
+    DFF(in=StartPed, out=StartPedDelayed);
 
-    Mux(a=c3_07, b=c3_8f, sel=in[3], out=out[3]);
+    //pedmode latch
+    Or(a=StartPedDelayed, b=PrevPedMode, out=PedModeSet);
+    Not(in=TimerDone, out=NotDone);
+    And(a=PedModeSet, b=NotDone, out=PedMode);
+    DFF(in=PedMode, out=PrevPedMode);
 
-    // Segment out[4]
-    Mux(a=true,  b=false, sel=in[0], out=c4_01);
-    Mux(a=true,  b=true,  sel=in[0], out=c4_23);
-    Mux(a=true,  b=true,  sel=in[0], out=c4_45);
-    Mux(a=true,  b=true,  sel=in[0], out=c4_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c4_89);
-    Mux(a=false, b=false, sel=in[0], out=c4_ab);
-    Mux(a=false, b=false, sel=in[0], out=c4_cd);
-    Mux(a=false, b=false, sel=in[0], out=c4_ef);
+    //wait is true when pedmode is not active
+    Not(in=PedMode, out=Wait);
 
-    Mux(a=c4_01, b=c4_23, sel=in[1], out=c4_03);
-    Mux(a=c4_45, b=c4_67, sel=in[1], out=c4_47);
-    Mux(a=c4_89, b=c4_ab, sel=in[1], out=c4_8b);
-    Mux(a=c4_cd, b=c4_ef, sel=in[1], out=c4_cf);
+    Or(a=StartPed, b=false, out=ResetSignal);
 
-    Mux(a=c4_03, b=c4_47, sel=in[2], out=c4_07);
-    Mux(a=c4_8b, b=c4_cf, sel=in[2], out=c4_8f);
+    Not(in=TimerDone, out=notTimerDone);
+    And(a=PedMode, b=notTimerDone, out=DecSignal);
 
-    Mux(a=c4_07, b=c4_8f, sel=in[3], out=out[4]);
+    DFF(in=DecSignal, out=DecSignalPrev);
+    Or(a=DecSignal, b=DecSignalPrev, out=HasCounted);
 
-    // Segment out[5]
-    Mux(a=true,  b=true,  sel=in[0], out=c5_01);
-    Mux(a=false, b=false, sel=in[0], out=c5_23);
-    Mux(a=true,  b=true,  sel=in[0], out=c5_45);
-    Mux(a=true,  b=true,  sel=in[0], out=c5_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c5_89);
-    Mux(a=false, b=false, sel=in[0], out=c5_ab);
-    Mux(a=false, b=false, sel=in[0], out=c5_cd);
-    Mux(a=false, b=false, sel=in[0], out=c5_ef);
+    DisplayCounter(dec=DecSignal, reset=ResetSignal, a=c6, b=c5, c=c4, d=c3, e=c2, f=c1, g=c0, digits[0]=digits0, digits[1]=digits1, digits[2]=digits2, digits[3]=digits3);
 
-    Mux(a=c5_01, b=c5_23, sel=in[1], out=c5_03);
-    Mux(a=c5_45, b=c5_67, sel=in[1], out=c5_47);
-    Mux(a=c5_89, b=c5_ab, sel=in[1], out=c5_8b);
-    Mux(a=c5_cd, b=c5_ef, sel=in[1], out=c5_cf);
+    //show a null value when pedmode isnt on (to satisfy code)
+    Mux(a=false, b=c0, sel=PedMode, out=C[0]);
+    Mux(a=false, b=c1, sel=PedMode, out=C[1]);
+    Mux(a=false, b=c2, sel=PedMode, out=C[2]);
+    Mux(a=false, b=c3, sel=PedMode, out=C[3]);
+    Mux(a=false, b=c4, sel=PedMode, out=C[4]);
+    Mux(a=false, b=c5, sel=PedMode, out=C[5]);
+    Mux(a=false, b=c6, sel=PedMode, out=C[6]);
 
-    Mux(a=c5_03, b=c5_47, sel=in[2], out=c5_07);
-    Mux(a=c5_8b, b=c5_cf, sel=in[2], out=c5_8f);
+    Or(a=digits0, b=false, out=t0);
+    Or(a=digits1, b=false, out=t1);
+    Or(a=digits2, b=false, out=t2);
+    Or(a=digits3, b=false, out=t3);
 
-    Mux(a=c5_07, b=c5_8f, sel=in[3], out=out[5]);
+    Not(in=t0, out=nt0);
+    Not(in=t1, out=nt1);
+    Not(in=t2, out=nt2);
+    Not(in=t3, out=nt3);
 
-    // Segment out[6]
-    Mux(a=true,  b=false, sel=in[0], out=c6_01);
-    Mux(a=true,  b=false, sel=in[0], out=c6_23);
-    Mux(a=false, b=true,  sel=in[0], out=c6_45);
-    Mux(a=true,  b=false, sel=in[0], out=c6_67);
-    Mux(a=true,  b=true,  sel=in[0], out=c6_89);
-    Mux(a=false, b=false, sel=in[0], out=c6_ab);
-    Mux(a=false, b=false, sel=in[0], out=c6_cd);
-    Mux(a=false, b=false, sel=in[0], out=c6_ef);
+    And(a=nt0, b=nt1, out=z01);
+    And(a=nt2, b=nt3, out=z23);
+    And(a=z01, b=z23, out=digitsIsZero);
 
-    Mux(a=c6_01, b=c6_23, sel=in[1], out=c6_03);
-    Mux(a=c6_45, b=c6_67, sel=in[1], out=c6_47);
-    Mux(a=c6_89, b=c6_ab, sel=in[1], out=c6_8b);
-    Mux(a=c6_cd, b=c6_ef, sel=in[1], out=c6_cf);
 
-    Mux(a=c6_03, b=c6_47, sel=in[2], out=c6_07);
-    Mux(a=c6_8b, b=c6_cf, sel=in[2], out=c6_8f);
+    DFF(in=PedMode, out=PedModePrev2);
+    Or(a=PedMode, b=PedModePrev2, out=HasStarted);
 
-    Mux(a=c6_07, b=c6_8f, sel=in[3], out=out[6]);
+    Not(in=ResetSignal, out=NotReset);
+
+    And(a=digitsIsZero, b=NotReset, out=ZeroAfterReset);
+    And(a=ZeroAfterReset, b=HasStarted, out=ZeroAfterStart);
+    And(a=ZeroAfterStart, b=HasCounted, out=TimerDoneRaw);
+
+    DFF(in=TimerDoneRaw, out=TimerDone);
 }
